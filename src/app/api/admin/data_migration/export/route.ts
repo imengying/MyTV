@@ -15,15 +15,6 @@ const gzipAsync = promisify(gzip);
 
 export async function POST(req: NextRequest) {
   try {
-    // 检查存储类型
-    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
-    if (storageType === 'localstorage') {
-      return NextResponse.json(
-        { error: '不支持本地存储进行数据迁移' },
-        { status: 400 }
-      );
-    }
-
     // 验证身份和权限
     const authInfo = getAuthInfoFromCookie(req);
     if (!authInfo || !authInfo.username) {
@@ -61,7 +52,9 @@ export async function POST(req: NextRequest) {
     // 获取所有用户
     let allUsers = await db.getAllUsers();
     // 添加站长用户
-    allUsers.push(process.env.USERNAME);
+    if (process.env.USERNAME) {
+      allUsers.push(process.env.USERNAME);
+    }
     allUsers = Array.from(new Set(allUsers));
 
     // 为每个用户收集数据
@@ -83,7 +76,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 覆盖站长密码
-    exportData.data.userData[process.env.USERNAME].password = process.env.PASSWORD;
+    if (process.env.USERNAME && exportData.data.userData[process.env.USERNAME]) {
+      exportData.data.userData[process.env.USERNAME].password = process.env.PASSWORD;
+    }
 
     // 将数据转换为JSON字符串
     const jsonData = JSON.stringify(exportData);
@@ -121,14 +116,7 @@ export async function POST(req: NextRequest) {
 // 辅助函数：获取用户密码（通过数据库直接访问）
 async function getUserPassword(username: string): Promise<string | null> {
   try {
-    // 使用 Redis 存储的直接访问方法
-    const storage = (db as any).storage;
-    if (storage && typeof storage.client?.get === 'function') {
-      const passwordKey = `u:${username}:pwd`;
-      const password = await storage.client.get(passwordKey);
-      return password;
-    }
-    return null;
+    return db.getStoredPassword(username);
   } catch (error) {
     console.error(`获取用户 ${username} 密码失败:`, error);
     return null;

@@ -1,33 +1,12 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import { AdminConfig } from './admin.types';
-import { KvrocksStorage } from './kvrocks.db';
-import { RedisStorage } from './redis.db';
+import { PostgresStorage } from './postgres.db';
 import { Favorite, IStorage, PlayRecord, SkipConfig } from './types';
-import { UpstashRedisStorage } from './upstash.db';
-
-// storage type 常量: 'localstorage' | 'redis' | 'upstash'，默认 'localstorage'
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | undefined) || 'localstorage';
 
 // 创建存储实例
 function createStorage(): IStorage {
-  switch (STORAGE_TYPE) {
-    case 'redis':
-      return new RedisStorage();
-    case 'upstash':
-      return new UpstashRedisStorage();
-    case 'kvrocks':
-      return new KvrocksStorage();
-    case 'localstorage':
-    default:
-      return null as unknown as IStorage;
-  }
+  return new PostgresStorage();
 }
 
 // 单例存储实例
@@ -48,29 +27,9 @@ export function generateStorageKey(source: string, id: string): string {
 // 导出便捷方法
 export class DbManager {
   private storage: IStorage;
-  private migrationPromise: Promise<void> | null = null;
 
   constructor() {
     this.storage = getStorage();
-    // 启动时自动触发数据迁移（异步，不阻塞构造）
-    if (this.storage && typeof this.storage.migrateData === 'function') {
-      this.migrationPromise = this.storage.migrateData().then(async () => {
-        // 数据结构迁移完成后，执行密码哈希迁移
-        if (typeof this.storage.migratePasswords === 'function') {
-          await this.storage.migratePasswords();
-        }
-      }).catch((err) => {
-        console.error('数据迁移异常:', err);
-      });
-    }
-  }
-
-  /** 等待迁移完成（内部方法，首次调用后 migrationPromise 会被置空） */
-  private async ensureMigrated(): Promise<void> {
-    if (this.migrationPromise) {
-      await this.migrationPromise;
-      this.migrationPromise = null;
-    }
   }
 
   // 播放记录相关方法
@@ -96,7 +55,6 @@ export class DbManager {
   async getAllPlayRecords(userName: string): Promise<{
     [key: string]: PlayRecord;
   }> {
-    await this.ensureMigrated();
     return this.storage.getAllPlayRecords(userName);
   }
 
@@ -136,7 +94,6 @@ export class DbManager {
   async getAllFavorites(
     userName: string
   ): Promise<{ [key: string]: Favorite }> {
-    await this.ensureMigrated();
     return this.storage.getAllFavorites(userName);
   }
 
@@ -178,6 +135,10 @@ export class DbManager {
 
   async changePassword(userName: string, newPassword: string): Promise<void> {
     await this.storage.changePassword(userName, newPassword);
+  }
+
+  async getStoredPassword(userName: string): Promise<string | null> {
+    return this.storage.getStoredPassword(userName);
   }
 
   async deleteUser(userName: string): Promise<void> {

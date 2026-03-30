@@ -4,7 +4,7 @@
   <img src="public/logo.png" alt="MyTV Logo" width="120">
 </div>
 
-> 🎬 **MyTV** 是一个开箱即用的影视聚合播放器。它基于 **Next.js 14** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多资源搜索、在线播放、收藏同步、播放记录和云端存储，适合作为自部署的点播站点底座。
+> 🎬 **MyTV** 是一个开箱即用的影视聚合播放器。它基于 **Next.js 14** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多资源搜索、在线播放、收藏同步、播放记录和 PostgreSQL 云端存储，适合作为自部署的点播站点底座。
 
 <div align="center">
 
@@ -23,7 +23,7 @@
 - 🔍 **多源聚合搜索**：一次搜索立刻返回全源结果。
 - 📄 **丰富详情页**：支持剧集列表、演员、年份、简介等完整信息展示。
 - ▶️ **流畅在线播放**：集成 HLS.js & ArtPlayer。
-- ❤️ **收藏 + 继续观看**：支持 Kvrocks/Redis/Upstash 存储，多端同步进度。
+- ❤️ **收藏 + 继续观看**：支持 PostgreSQL 持久化存储，多端同步进度。
 - 📱 **PWA**：离线缓存、安装到桌面/主屏，移动端原生体验。
 - 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
 - 👿 **智能去广告**：自动跳过视频中的切片广告（实验性）。
@@ -43,7 +43,7 @@
 
 - [技术栈](#技术栈)
 - [部署](#部署)
-  - [Vercel 部署](#vercel-部署推荐-upstash)
+  - [Vercel 部署](#vercel-部署推荐-postgresql)
   - [Docker 部署](#docker-部署)
 - [配置文件](#配置文件)
 - [订阅](#订阅)
@@ -71,13 +71,13 @@
 
 本项目支持两种部署方式：
 
-- **Docker**：适合 VPS、NAS、面板或本地服务器，推荐配合 Redis / Kvrocks / Upstash 使用。
-- **Vercel**：适合快速上线，推荐搭配 **Upstash Redis** 作为外部存储。
+- **Docker**：适合 VPS、NAS、面板或本地服务器，推荐配合 PostgreSQL 容器使用。
+- **Vercel**：适合快速上线，推荐搭配外部 PostgreSQL 服务使用。
 
-### Vercel 部署（推荐 Upstash）
+### Vercel 部署（推荐 PostgreSQL）
 
 1. Fork 本仓库到你自己的 GitHub 账号。
-2. 在 [Upstash](https://upstash.com/) 创建一个 Redis 数据库。
+2. 准备一个外部 PostgreSQL 数据库，推荐使用 Neon、Supabase 或其他兼容服务。
 3. 在 Vercel 中导入你的仓库并创建 `Next.js` 项目。
 4. 配置以下最小环境变量：
 
@@ -85,9 +85,8 @@
 USERNAME=admin
 PASSWORD=your_secure_password
 SITE_BASE=https://your-project.vercel.app
-NEXT_PUBLIC_STORAGE_TYPE=upstash
-UPSTASH_URL=你的 Upstash HTTPS Endpoint
-UPSTASH_TOKEN=你的 Upstash Token
+DATABASE_URL=postgresql://user:password@host:5432/mytv
+DATABASE_SSL=true
 ```
 
 5. 部署完成后访问 `/login` 登录。
@@ -95,98 +94,45 @@ UPSTASH_TOKEN=你的 Upstash Token
 
 说明：
 
-- Vercel 部署推荐使用 `upstash`，不建议使用本地存储。
+- Vercel 部署推荐使用托管 PostgreSQL，不再支持 Redis/Upstash/Kvrocks。
 - 项目内置了 `vercel.json`，会自动注册每日一次的 `/api/cron` 定时任务。
 - 如果后续绑定了自定义域名，请同步更新 `SITE_BASE`。
 
 ### Docker 部署
 
-#### Kvrocks 存储（推荐）
-
 ```yml
 services:
-  mytv-core:
-    image: ghcr.io/moontechlab/lunatv:latest
-    container_name: mytv-core
+  postgres:
+    image: postgres:16-alpine
+    container_name: mytv-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=mytv
+      - POSTGRES_USER=mytv
+      - POSTGRES_PASSWORD=mytv_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mytv -d mytv']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  mytv-app:
+    build: .
+    container_name: mytv-app
     restart: on-failure
     ports:
       - '3000:3000'
     environment:
       - USERNAME=admin
       - PASSWORD=admin_password
-      - NEXT_PUBLIC_STORAGE_TYPE=kvrocks
-      - KVROCKS_URL=redis://mytv-kvrocks:6666
-    networks:
-      - mytv-network
+      - DATABASE_URL=postgresql://mytv:mytv_password@postgres:5432/mytv
+      - DATABASE_SSL=false
     depends_on:
-      - mytv-kvrocks
-  mytv-kvrocks:
-    image: apache/kvrocks
-    container_name: mytv-kvrocks
-    restart: unless-stopped
-    volumes:
-      - kvrocks-data:/var/lib/kvrocks
-    networks:
-      - mytv-network
-networks:
-  mytv-network:
-    driver: bridge
+      postgres:
+        condition: service_healthy
 volumes:
-  kvrocks-data:
-```
-
-#### Redis 存储（有一定的丢数据风险）
-
-```yml
-services:
-  mytv-core:
-    image: ghcr.io/moontechlab/lunatv:latest
-    container_name: mytv-core
-    restart: on-failure
-    ports:
-      - '3000:3000'
-    environment:
-      - USERNAME=admin
-      - PASSWORD=admin_password
-      - NEXT_PUBLIC_STORAGE_TYPE=redis
-      - REDIS_URL=redis://mytv-redis:6379
-    networks:
-      - mytv-network
-    depends_on:
-      - mytv-redis
-  mytv-redis:
-    image: redis:alpine
-    container_name: mytv-redis
-    restart: unless-stopped
-    networks:
-      - mytv-network
-    # 请开启持久化，否则升级/重启后数据丢失
-    volumes:
-      - ./data:/data
-networks:
-  mytv-network:
-    driver: bridge
-```
-
-#### Upstash 存储
-
-1. 在 [upstash](https://upstash.com/) 注册账号并新建一个 Redis 实例，名称任意。
-2. 复制新数据库的 **HTTPS ENDPOINT 和 TOKEN**
-3. 使用如下 docker compose
-```yml
-services:
-  mytv-core:
-    image: ghcr.io/moontechlab/lunatv:latest
-    container_name: mytv-core
-    restart: on-failure
-    ports:
-      - '3000:3000'
-    environment:
-      - USERNAME=admin
-      - PASSWORD=admin_password
-      - NEXT_PUBLIC_STORAGE_TYPE=upstash
-      - UPSTASH_URL=上面 https 开头的 HTTPS ENDPOINT
-      - UPSTASH_TOKEN=上面的 TOKEN
+  postgres-data:
 ```
 
 ## 配置文件
@@ -255,11 +201,8 @@ dockge/komodo 等 docker compose UI 也有自动更新功能
 | SITE_BASE                           | 站点 url              |       形如 https://example.com                  | 空                                                                                                                     |
 | NEXT_PUBLIC_SITE_NAME               | 站点名称                                     | 任意字符串                       | MyTV                                                                                                                       |
 | ANNOUNCEMENT                        | 站点公告                                     | 任意字符串                       | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
-| NEXT_PUBLIC_STORAGE_TYPE            | 播放记录/收藏的存储方式                      | redis、kvrocks、upstash | 无默认，必填字段                                                                                                               |
-| KVROCKS_URL                           | kvrocks 连接 url                               | 连接 url                         | 空                                                                                                                         |
-| REDIS_URL                           | redis 连接 url                               | 连接 url                         | 空                                                                                                                         |
-| UPSTASH_URL                         | upstash redis 连接 url                       | 连接 url                         | 空                                                                                                                         |
-| UPSTASH_TOKEN                       | upstash redis 连接 token                     | 连接 token                       | 空                                                                                                                         |
+| DATABASE_URL                        | PostgreSQL 连接字符串                        | postgresql://...                 | 无默认，必填字段                                                                                                               |
+| DATABASE_SSL                        | 是否启用 PostgreSQL SSL                      | true/false                       | 自动判断（本地默认 false，远程默认 true）                                                                                     |
 | NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数                     | 1-50                             | 5                                                                                                                          |
 | NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式                           | 见下方                           | direct                                                                                                                     |
 | NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL                       | url prefix                       | (空)                                                                                                                       |

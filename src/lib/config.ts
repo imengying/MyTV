@@ -244,7 +244,11 @@ export async function getConfig(): Promise<AdminConfig> {
   }
   adminConfig = configSelfCheck(adminConfig);
   cachedConfig = adminConfig;
-  db.saveAdminConfig(cachedConfig);
+  try {
+    await db.saveAdminConfig(cachedConfig);
+  } catch (error) {
+    console.error('保存管理员配置失败:', error);
+  }
   return cachedConfig;
 }
 
