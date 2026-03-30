@@ -1,4 +1,4 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -43,7 +43,12 @@ async function cronJob() {
 
 async function refreshConfig() {
   let config = await getConfig();
-  if (config && config.ConfigSubscribtion && config.ConfigSubscribtion.URL && config.ConfigSubscribtion.AutoUpdate) {
+  if (
+    config &&
+    config.ConfigSubscribtion &&
+    config.ConfigSubscribtion.URL &&
+    config.ConfigSubscribtion.AutoUpdate
+  ) {
     try {
       const response = await fetch(config.ConfigSubscribtion.URL);
 
@@ -66,7 +71,7 @@ async function refreshConfig() {
 
       try {
         JSON.parse(decodedContent);
-      } catch (e) {
+      } catch {
         throw new Error('配置文件格式错误，请检查 JSON 语法');
       }
       config.ConfigFile = decodedContent;
@@ -94,7 +99,7 @@ async function refreshRecordAndFavorites() {
     const getDetail = async (
       source: string,
       id: string,
-      fallbackTitle: string
+      fallbackTitle: string,
     ): Promise<SearchResult | null> => {
       const key = `${source}+${id}`;
       let promise = detailCache.get(key);
@@ -121,7 +126,7 @@ async function refreshRecordAndFavorites() {
     // 并发限制工具
     const runWithConcurrency = async <T>(
       tasks: (() => Promise<T>)[],
-      concurrency: number
+      concurrency: number,
     ): Promise<T[]> => {
       const results: T[] = [];
       let index = 0;
@@ -131,7 +136,11 @@ async function refreshRecordAndFavorites() {
           results[i] = await tasks[i]();
         }
       };
-      await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker()));
+      await Promise.all(
+        Array.from({ length: Math.min(concurrency, tasks.length) }, () =>
+          worker(),
+        ),
+      );
       return results;
     };
 
@@ -175,7 +184,7 @@ async function refreshRecordAndFavorites() {
                 search_title: record.search_title,
               });
               console.log(
-                `更新播放记录: ${record.title} (${record.total_episodes} -> ${episodeCount})`
+                `更新播放记录: ${record.title} (${record.total_episodes} -> ${episodeCount})`,
               );
             }
 
@@ -224,7 +233,7 @@ async function refreshRecordAndFavorites() {
                 search_title: fav.search_title,
               });
               console.log(
-                `更新收藏: ${fav.title} (${fav.total_episodes} -> ${favEpisodeCount})`
+                `更新收藏: ${fav.title} (${fav.total_episodes} -> ${favEpisodeCount})`,
               );
             }
 

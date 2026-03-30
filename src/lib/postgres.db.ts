@@ -96,14 +96,14 @@ function getPool(): Pool {
       max: Number(process.env.DATABASE_POOL_MAX || 10),
       idleTimeoutMillis: Number(process.env.DATABASE_IDLE_TIMEOUT_MS || 30000),
       connectionTimeoutMillis: Number(
-        process.env.DATABASE_CONNECT_TIMEOUT_MS || 10000
+        process.env.DATABASE_CONNECT_TIMEOUT_MS || 10000,
       ),
       ssl: shouldUseSsl(connectionString)
         ? { rejectUnauthorized: false }
         : undefined,
     });
 
-    globalPostgres.__mytvPgPool.on('error', (error) => {
+    globalPostgres.__mytvPgPool.on('error', (error: Error) => {
       console.error('PostgreSQL pool error:', error);
     });
   }
@@ -129,7 +129,7 @@ async function ensureOwnerUser(pool: Pool): Promise<void> {
         password_hash = EXCLUDED.password_hash,
         updated_at = NOW()
     `,
-    [process.env.USERNAME, ownerPassword]
+    [process.env.USERNAME, ownerPassword],
   );
 }
 
@@ -161,12 +161,10 @@ export class PostgresStorage implements IStorage {
     const pool = this.getPoolInstance();
 
     if (!globalPostgres.__mytvPgBootstrap) {
-      globalPostgres.__mytvPgBootstrap = bootstrapPool(pool).catch(
-        (error) => {
-          globalPostgres.__mytvPgBootstrap = undefined;
-          throw error;
-        }
-      );
+      globalPostgres.__mytvPgBootstrap = bootstrapPool(pool).catch((error) => {
+        globalPostgres.__mytvPgBootstrap = undefined;
+        throw error;
+      });
     }
 
     await globalPostgres.__mytvPgBootstrap;
@@ -174,7 +172,7 @@ export class PostgresStorage implements IStorage {
 
   private async query<T extends QueryResultRow = QueryResultRow>(
     text: string,
-    values: unknown[] = []
+    values: unknown[] = [],
   ): Promise<QueryResult<T>> {
     await this.ready();
     return this.getPoolInstance().query<T>(text, values);
@@ -182,7 +180,7 @@ export class PostgresStorage implements IStorage {
 
   async getPlayRecord(
     userName: string,
-    key: string
+    key: string,
   ): Promise<PlayRecord | null> {
     const result = await this.query<{ record: PlayRecord | string }>(
       `
@@ -190,7 +188,7 @@ export class PostgresStorage implements IStorage {
         FROM mytv_play_records
         WHERE username = $1 AND storage_key = $2
       `,
-      [userName, key]
+      [userName, key],
     );
 
     const row = result.rows[0];
@@ -200,7 +198,7 @@ export class PostgresStorage implements IStorage {
   async setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void> {
     await this.query(
       `
@@ -211,27 +209,36 @@ export class PostgresStorage implements IStorage {
           record = EXCLUDED.record,
           updated_at = NOW()
       `,
-      [userName, key, JSON.stringify(record)]
+      [userName, key, JSON.stringify(record)],
     );
   }
 
   async getAllPlayRecords(
-    userName: string
+    userName: string,
   ): Promise<Record<string, PlayRecord>> {
-    const result = await this.query<{ storage_key: string; record: PlayRecord | string }>(
+    const result = await this.query<{
+      storage_key: string;
+      record: PlayRecord | string;
+    }>(
       `
         SELECT storage_key, record
         FROM mytv_play_records
         WHERE username = $1
         ORDER BY updated_at DESC
       `,
-      [userName]
+      [userName],
     );
 
-    return result.rows.reduce<Record<string, PlayRecord>>((acc, row) => {
-      acc[row.storage_key] = parseJsonColumn<PlayRecord>(row.record);
-      return acc;
-    }, {});
+    return result.rows.reduce<Record<string, PlayRecord>>(
+      (
+        acc: Record<string, PlayRecord>,
+        row: { storage_key: string; record: PlayRecord | string },
+      ) => {
+        acc[row.storage_key] = parseJsonColumn<PlayRecord>(row.record);
+        return acc;
+      },
+      {},
+    );
   }
 
   async deletePlayRecord(userName: string, key: string): Promise<void> {
@@ -240,7 +247,7 @@ export class PostgresStorage implements IStorage {
         DELETE FROM mytv_play_records
         WHERE username = $1 AND storage_key = $2
       `,
-      [userName, key]
+      [userName, key],
     );
   }
 
@@ -250,7 +257,7 @@ export class PostgresStorage implements IStorage {
         DELETE FROM mytv_play_records
         WHERE username = $1
       `,
-      [userName]
+      [userName],
     );
   }
 
@@ -261,7 +268,7 @@ export class PostgresStorage implements IStorage {
         FROM mytv_favorites
         WHERE username = $1 AND storage_key = $2
       `,
-      [userName, key]
+      [userName, key],
     );
 
     const row = result.rows[0];
@@ -271,7 +278,7 @@ export class PostgresStorage implements IStorage {
   async setFavorite(
     userName: string,
     key: string,
-    favorite: Favorite
+    favorite: Favorite,
   ): Promise<void> {
     await this.query(
       `
@@ -282,25 +289,34 @@ export class PostgresStorage implements IStorage {
           favorite = EXCLUDED.favorite,
           updated_at = NOW()
       `,
-      [userName, key, JSON.stringify(favorite)]
+      [userName, key, JSON.stringify(favorite)],
     );
   }
 
   async getAllFavorites(userName: string): Promise<Record<string, Favorite>> {
-    const result = await this.query<{ storage_key: string; favorite: Favorite | string }>(
+    const result = await this.query<{
+      storage_key: string;
+      favorite: Favorite | string;
+    }>(
       `
         SELECT storage_key, favorite
         FROM mytv_favorites
         WHERE username = $1
         ORDER BY updated_at DESC
       `,
-      [userName]
+      [userName],
     );
 
-    return result.rows.reduce<Record<string, Favorite>>((acc, row) => {
-      acc[row.storage_key] = parseJsonColumn<Favorite>(row.favorite);
-      return acc;
-    }, {});
+    return result.rows.reduce<Record<string, Favorite>>(
+      (
+        acc: Record<string, Favorite>,
+        row: { storage_key: string; favorite: Favorite | string },
+      ) => {
+        acc[row.storage_key] = parseJsonColumn<Favorite>(row.favorite);
+        return acc;
+      },
+      {},
+    );
   }
 
   async deleteFavorite(userName: string, key: string): Promise<void> {
@@ -309,7 +325,7 @@ export class PostgresStorage implements IStorage {
         DELETE FROM mytv_favorites
         WHERE username = $1 AND storage_key = $2
       `,
-      [userName, key]
+      [userName, key],
     );
   }
 
@@ -319,12 +335,14 @@ export class PostgresStorage implements IStorage {
         DELETE FROM mytv_favorites
         WHERE username = $1
       `,
-      [userName]
+      [userName],
     );
   }
 
   async registerUser(userName: string, password: string): Promise<void> {
-    const storedPassword = isHashed(password) ? password : hashPassword(password);
+    const storedPassword = isHashed(password)
+      ? password
+      : hashPassword(password);
 
     await this.query(
       `
@@ -335,7 +353,7 @@ export class PostgresStorage implements IStorage {
           password_hash = EXCLUDED.password_hash,
           updated_at = NOW()
       `,
-      [userName, storedPassword]
+      [userName, storedPassword],
     );
   }
 
@@ -346,7 +364,7 @@ export class PostgresStorage implements IStorage {
         FROM mytv_users
         WHERE username = $1
       `,
-      [userName]
+      [userName],
     );
 
     const stored = result.rows[0]?.password_hash;
@@ -366,7 +384,7 @@ export class PostgresStorage implements IStorage {
           WHERE username = $1
         ) AS exists
       `,
-      [userName]
+      [userName],
     );
 
     return Boolean(result.rows[0]?.exists);
@@ -383,7 +401,7 @@ export class PostgresStorage implements IStorage {
         SET password_hash = $2, updated_at = NOW()
         WHERE username = $1
       `,
-      [userName, storedPassword]
+      [userName, storedPassword],
     );
   }
 
@@ -394,7 +412,7 @@ export class PostgresStorage implements IStorage {
         FROM mytv_users
         WHERE username = $1
       `,
-      [userName]
+      [userName],
     );
 
     return result.rows[0]?.password_hash || null;
@@ -406,7 +424,7 @@ export class PostgresStorage implements IStorage {
         DELETE FROM mytv_users
         WHERE username = $1
       `,
-      [userName]
+      [userName],
     );
   }
 
@@ -418,10 +436,10 @@ export class PostgresStorage implements IStorage {
         WHERE username = $1
         ORDER BY updated_at DESC
       `,
-      [userName]
+      [userName],
     );
 
-    return result.rows.map((row) => row.keyword);
+    return result.rows.map((row: { keyword: string }) => row.keyword);
   }
 
   async addSearchHistory(userName: string, keyword: string): Promise<void> {
@@ -432,7 +450,7 @@ export class PostgresStorage implements IStorage {
         ON CONFLICT (username, keyword)
         DO UPDATE SET updated_at = NOW()
       `,
-      [userName, keyword]
+      [userName, keyword],
     );
 
     await this.query(
@@ -447,7 +465,7 @@ export class PostgresStorage implements IStorage {
             LIMIT $2
           )
       `,
-      [userName, SEARCH_HISTORY_LIMIT]
+      [userName, SEARCH_HISTORY_LIMIT],
     );
   }
 
@@ -458,7 +476,7 @@ export class PostgresStorage implements IStorage {
           DELETE FROM mytv_search_history
           WHERE username = $1 AND keyword = $2
         `,
-        [userName, keyword]
+        [userName, keyword],
       );
       return;
     }
@@ -468,7 +486,7 @@ export class PostgresStorage implements IStorage {
         DELETE FROM mytv_search_history
         WHERE username = $1
       `,
-      [userName]
+      [userName],
     );
   }
 
@@ -478,10 +496,10 @@ export class PostgresStorage implements IStorage {
         SELECT username
         FROM mytv_users
         ORDER BY username ASC
-      `
+      `,
     );
 
-    return result.rows.map((row) => row.username);
+    return result.rows.map((row: { username: string }) => row.username);
   }
 
   async getAdminConfig(): Promise<AdminConfig | null> {
@@ -490,7 +508,7 @@ export class PostgresStorage implements IStorage {
         SELECT config
         FROM mytv_admin_configs
         WHERE config_key = 'default'
-      `
+      `,
     );
 
     const row = result.rows[0];
@@ -507,14 +525,14 @@ export class PostgresStorage implements IStorage {
           config = EXCLUDED.config,
           updated_at = NOW()
       `,
-      [JSON.stringify(config)]
+      [JSON.stringify(config)],
     );
   }
 
   async getSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<SkipConfig | null> {
     const result = await this.query<{ config: SkipConfig | string }>(
       `
@@ -522,7 +540,7 @@ export class PostgresStorage implements IStorage {
         FROM mytv_skip_configs
         WHERE username = $1 AND source = $2 AND item_id = $3
       `,
-      [userName, source, id]
+      [userName, source, id],
     );
 
     const row = result.rows[0];
@@ -533,7 +551,7 @@ export class PostgresStorage implements IStorage {
     userName: string,
     source: string,
     id: string,
-    config: SkipConfig
+    config: SkipConfig,
   ): Promise<void> {
     await this.query(
       `
@@ -544,26 +562,26 @@ export class PostgresStorage implements IStorage {
           config = EXCLUDED.config,
           updated_at = NOW()
       `,
-      [userName, source, id, JSON.stringify(config)]
+      [userName, source, id, JSON.stringify(config)],
     );
   }
 
   async deleteSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<void> {
     await this.query(
       `
         DELETE FROM mytv_skip_configs
         WHERE username = $1 AND source = $2 AND item_id = $3
       `,
-      [userName, source, id]
+      [userName, source, id],
     );
   }
 
   async getAllSkipConfigs(
-    userName: string
+    userName: string,
   ): Promise<{ [key: string]: SkipConfig }> {
     const result = await this.query<{
       source: string;
@@ -576,15 +594,21 @@ export class PostgresStorage implements IStorage {
         WHERE username = $1
         ORDER BY updated_at DESC
       `,
-      [userName]
+      [userName],
     );
 
-    return result.rows.reduce<Record<string, SkipConfig>>((acc, row) => {
-      acc[`${row.source}+${row.item_id}`] = parseJsonColumn<SkipConfig>(
-        row.config
-      );
-      return acc;
-    }, {});
+    return result.rows.reduce<Record<string, SkipConfig>>(
+      (
+        acc: Record<string, SkipConfig>,
+        row: { source: string; item_id: string; config: SkipConfig | string },
+      ) => {
+        acc[`${row.source}+${row.item_id}`] = parseJsonColumn<SkipConfig>(
+          row.config,
+        );
+        return acc;
+      },
+      {},
+    );
   }
 
   async clearAllData(): Promise<void> {
@@ -598,7 +622,7 @@ export class PostgresStorage implements IStorage {
           mytv_play_records,
           mytv_users
         RESTART IDENTITY CASCADE
-      `
+      `,
     );
 
     await ensureOwnerUser(this.getPoolInstance());

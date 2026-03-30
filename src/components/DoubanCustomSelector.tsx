@@ -125,11 +125,11 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   // 更新指示器位置的通用函数
   const updateIndicatorPosition = (
     activeIndex: number,
-    containerRef: React.RefObject<HTMLDivElement>,
+    containerRef: React.RefObject<HTMLDivElement | null>,
     buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
     setIndicatorStyle: React.Dispatch<
       React.SetStateAction<{ left: number; width: number }>
-    >
+    >,
   ) => {
     if (
       activeIndex >= 0 &&
@@ -160,26 +160,27 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     // 主选择器初始位置
     if (primaryOptions.length > 0) {
       const activeIndex = primaryOptions.findIndex(
-        (opt) => opt.value === (primarySelection || primaryOptions[0].value)
+        (opt) => opt.value === (primarySelection || primaryOptions[0].value),
       );
       updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
     }
 
     // 副选择器初始位置
     if (secondaryOptions.length > 0) {
       const activeIndex = secondaryOptions.findIndex(
-        (opt) => opt.value === (secondarySelection || secondaryOptions[0].value)
+        (opt) =>
+          opt.value === (secondarySelection || secondaryOptions[0].value),
       );
       updateIndicatorPosition(
         activeIndex,
         secondaryContainerRef,
         secondaryButtonRefs,
-        setSecondaryIndicatorStyle
+        setSecondaryIndicatorStyle,
       );
     }
   }, [primaryOptions, secondaryOptions]); // 当选项变化时重新计算
@@ -188,13 +189,13 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   useEffect(() => {
     if (primaryOptions.length > 0) {
       const activeIndex = primaryOptions.findIndex(
-        (opt) => opt.value === primarySelection
+        (opt) => opt.value === primarySelection,
       );
       const cleanup = updateIndicatorPosition(
         activeIndex,
         primaryContainerRef,
         primaryButtonRefs,
-        setPrimaryIndicatorStyle
+        setPrimaryIndicatorStyle,
       );
       return cleanup;
     }
@@ -204,13 +205,13 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   useEffect(() => {
     if (secondaryOptions.length > 0) {
       const activeIndex = secondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection
+        (opt) => opt.value === secondarySelection,
       );
       const cleanup = updateIndicatorPosition(
         activeIndex,
         secondaryContainerRef,
         secondaryButtonRefs,
-        setSecondaryIndicatorStyle
+        setSecondaryIndicatorStyle,
       );
       return cleanup;
     }
@@ -221,7 +222,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     options: { label: string; value: string }[],
     activeValue: string | undefined,
     onChange: (value: string) => void,
-    isPrimary = false
+    isPrimary = false,
   ) => {
     const containerRef = isPrimary
       ? primaryContainerRef
@@ -234,12 +235,12 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     return (
       <div
         ref={containerRef}
-        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
+        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-xs'
       >
         {/* 滑动的白色背景指示器 */}
         {indicatorStyle.width > 0 && (
           <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
+            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-xs transition-all duration-300 ease-out'
             style={{
               left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
@@ -289,7 +290,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
               primaryOptions,
               primarySelection || primaryOptions[0]?.value,
               onPrimaryChange,
-              true
+              true,
             )}
           </div>
         </div>
@@ -305,7 +306,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
                 secondaryOptions,
                 secondarySelection || secondaryOptions[0]?.value,
                 onSecondaryChange,
-                false
+                false,
               )}
             </div>
           </div>

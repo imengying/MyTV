@@ -1,4 +1,4 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (username !== process.env.USERNAME) {
       return NextResponse.json(
         { error: '权限不足，只有站长可以修改配置文件' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -34,17 +34,17 @@ export async function POST(request: NextRequest) {
     if (!configFile || typeof configFile !== 'string') {
       return NextResponse.json(
         { error: '配置文件内容不能为空' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // 验证 JSON 格式
     try {
       JSON.parse(configFile);
-    } catch (e) {
+    } catch {
       return NextResponse.json(
         { error: '配置文件格式错误，请检查 JSON 语法' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         error: '更新配置文件失败',
         details: (error as Error).message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

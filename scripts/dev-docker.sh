@@ -1,5 +1,5 @@
 #!/bin/bash
-# 本地构建并启动 Docker 镜像 + Redis
+# 本地构建并启动 Docker 镜像 + PostgreSQL
 # 用法: ./scripts/dev-docker.sh [up|down|rebuild|logs]
 
 set -e
@@ -13,7 +13,7 @@ case "${1:-up}" in
     echo ""
     echo "✅ 服务已启动"
     echo "   应用: http://localhost:3000"
-    echo "   Redis: localhost:6379"
+    echo "   PostgreSQL: localhost:5432"
     echo ""
     echo "   默认账号: admin / admin123"
     echo "   查看日志: ./scripts/dev-docker.sh logs"

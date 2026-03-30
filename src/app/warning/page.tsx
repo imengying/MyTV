@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function WarningPage() {
   return (
-    <div className='min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-linear-to-br from-red-50 to-orange-50 flex items-center justify-center p-4'>
       <div className='max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-4 sm:p-8 border border-red-200'>
         {/* 警告图标 */}
         <div className='flex justify-center mb-4 sm:mb-6'>
@@ -77,7 +77,7 @@ export default function WarningPage() {
             </h3>
             <p className='text-sm sm:text-base text-yellow-700'>
               请立即配置{' '}
-              <code className='bg-yellow-100 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono'>
+              <code className='bg-yellow-100 px-1.5 py-0.5 rounded-sm text-xs sm:text-sm font-mono'>
                 PASSWORD
               </code>{' '}
               环境变量以启用访问控制。

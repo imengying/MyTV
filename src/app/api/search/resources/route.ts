@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -17,7 +15,7 @@ export async function GET(request: NextRequest) {
     const apiSites = await getAvailableApiSites(authInfo.username);
 
     return NextResponse.json(apiSites);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: '获取资源失败' }, { status: 500 });
   }
 }

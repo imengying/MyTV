@@ -33,7 +33,7 @@ export interface IStorage {
   setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void>;
   getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
   deletePlayRecord(userName: string, key: string): Promise<void>;
@@ -53,7 +53,7 @@ export interface IStorage {
   checkUserExist(userName: string): Promise<boolean>;
   // 修改用户密码
   changePassword(userName: string, newPassword: string): Promise<void>;
-  // 获取已存储的密码值（用于备份/迁移）
+  // 获取已存储的密码值（用于备份/恢复）
   getStoredPassword(userName: string): Promise<string | null>;
   // 删除用户（包括密码、搜索历史、播放记录、收藏夹）
   deleteUser(userName: string): Promise<void>;
@@ -74,22 +74,16 @@ export interface IStorage {
   getSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<SkipConfig | null>;
   setSkipConfig(
     userName: string,
     source: string,
     id: string,
-    config: SkipConfig
+    config: SkipConfig,
   ): Promise<void>;
   deleteSkipConfig(userName: string, source: string, id: string): Promise<void>;
   getAllSkipConfigs(userName: string): Promise<{ [key: string]: SkipConfig }>;
-
-  // 数据迁移（旧扁平 key → Hash 结构）
-  migrateData?(): Promise<void>;
-
-  // 密码迁移（明文 → 加盐哈希）
-  migratePasswords?(): Promise<void>;
 
   // 数据清理相关
   clearAllData(): Promise<void>;

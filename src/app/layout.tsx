@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 
@@ -45,7 +43,7 @@ export default async function RootLayout({
   const disableYellowFilter = config.SiteConfig.DisableYellowFilter;
   const fluidSearch = config.SiteConfig.FluidSearch;
   const customCategories = config.CustomCategories.filter(
-    (category) => !category.disabled
+    (category) => !category.disabled,
   ).map((category) => ({
     name: category.name || '',
     type: category.type,
@@ -58,7 +56,6 @@ export default async function RootLayout({
 
   // 将运行时配置注入到全局 window 对象，供客户端在运行时读取
   const runtimeConfig = {
-    STORAGE_TYPE: 'postgresql',
     DOUBAN_PROXY_TYPE: doubanProxyType,
     DOUBAN_PROXY: doubanProxy,
     DOUBAN_IMAGE_PROXY_TYPE: doubanImageProxyType,
@@ -77,7 +74,7 @@ export default async function RootLayout({
         />
         <link rel='apple-touch-icon' href='/icons/icon-192x192.png' />
         {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        {}
         <script
           dangerouslySetInnerHTML={{
             __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig)};`,

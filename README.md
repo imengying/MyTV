@@ -4,13 +4,14 @@
   <img src="public/logo.png" alt="MyTV Logo" width="120">
 </div>
 
-> 🎬 **MyTV** 是一个开箱即用的影视聚合播放器。它基于 **Next.js 14** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多资源搜索、在线播放、收藏同步、播放记录和 PostgreSQL 云端存储，适合作为自部署的点播站点底座。
+> 🎬 **MyTV** 是一个开箱即用的影视聚合播放器。它基于 **Next.js 16** + **React 19** + **Tailwind&nbsp;CSS 4** + **TypeScript 5** 构建，支持多资源搜索、在线播放、收藏同步、播放记录和 PostgreSQL 云端存储，适合作为自部署的点播站点底座。
 
 <div align="center">
 
-![Next.js](https://img.shields.io/badge/Next.js-14-000?logo=nextdotjs)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38bdf8?logo=tailwindcss)
-![TypeScript](https://img.shields.io/badge/TypeScript-4.x-3178c6?logo=typescript)
+![Next.js](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
+![React](https://img.shields.io/badge/React-19-149eca?logo=react)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38bdf8?logo=tailwindcss)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Docker Ready](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
 
@@ -60,12 +61,13 @@
 
 | 分类      | 主要依赖                                                                                              |
 | --------- | ----------------------------------------------------------------------------------------------------- |
-| 前端框架  | [Next.js 14](https://nextjs.org/) · App Router                                                        |
-| UI & 样式 | [Tailwind&nbsp;CSS 3](https://tailwindcss.com/)                                                       |
-| 语言      | TypeScript 4                                                                                          |
+| 前端框架  | [Next.js 16](https://nextjs.org/) · App Router                                                        |
+| UI & 样式 | [Tailwind&nbsp;CSS 4](https://tailwindcss.com/)                                                       |
+| 语言      | TypeScript 5                                                                                          |
+| 运行环境  | Node.js 24 · pnpm 10                                                                                  |
 | 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
 | 代码质量  | ESLint · Prettier · Jest                                                                              |
-| 部署      | Docker · Vercel                                                           |
+| 部署      | Docker · Vercel                                                                                       |
 
 ## 部署
 
@@ -94,7 +96,7 @@ DATABASE_SSL=true
 
 说明：
 
-- Vercel 部署推荐使用托管 PostgreSQL，不再支持 Redis/Upstash/Kvrocks。
+- Vercel 部署推荐使用托管 PostgreSQL，当前版本仅支持 PostgreSQL 作为持久化存储。
 - 项目内置了 `vercel.json`，会自动注册每日一次的 `/api/cron` 定时任务。
 - 如果后续绑定了自定义域名，请同步更新 `SITE_BASE`。
 
@@ -194,25 +196,25 @@ dockge/komodo 等 docker compose UI 也有自动更新功能
 
 ## 环境变量
 
-| 变量                                | 说明                                         | 可选值                           | 默认值                                                                                                                     |
-| ----------------------------------- | -------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| USERNAME                            | 站长账号           | 任意字符串                       | 无默认，必填字段                                                                                                                     |
-| PASSWORD                            | 站长密码           | 任意字符串                       | 无默认，必填字段                                                                                                                     |
-| SITE_BASE                           | 站点 url              |       形如 https://example.com                  | 空                                                                                                                     |
-| NEXT_PUBLIC_SITE_NAME               | 站点名称                                     | 任意字符串                       | MyTV                                                                                                                       |
-| ANNOUNCEMENT                        | 站点公告                                     | 任意字符串                       | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
-| DATABASE_URL                        | PostgreSQL 连接字符串                        | postgresql://...                 | 无默认，必填字段                                                                                                               |
-| DATABASE_SSL                        | 是否启用 PostgreSQL SSL                      | true/false                       | 自动判断（本地默认 false，远程默认 true）                                                                                     |
-| NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数                     | 1-50                             | 5                                                                                                                          |
-| NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式                           | 见下方                           | direct                                                                                                                     |
-| NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL                       | url prefix                       | (空)                                                                                                                       |
-| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE | 豆瓣图片代理类型                             | 见下方                           | direct                                                                                                                     |
-| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY      | 自定义豆瓣图片代理 URL                       | url prefix                       | (空)                                                                                                                       |
-| NEXT_PUBLIC_DISABLE_YELLOW_FILTER   | 关闭色情内容过滤                             | true/false                       | false                                                                                                                      |
-| NEXT_PUBLIC_FLUID_SEARCH | 是否开启搜索接口流式输出 | true/ false | true |
-| NEXT_PUBLIC_PROJECT_REPO_URL        | 项目仓库地址（可选）                         | URL                              | 空                                                                                                                         |
-| NEXT_PUBLIC_VERSION_CHECK_URL       | 版本检查地址（可选）                         | URL                              | 空                                                                                                                         |
-| NEXT_PUBLIC_CHANGELOG_URL           | 远程更新日志地址（可选）                     | URL                              | 空                                                                                                                         |
+| 变量                                | 说明                     | 可选值                   | 默认值                                                                                                                     |
+| ----------------------------------- | ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| USERNAME                            | 站长账号                 | 任意字符串               | 无默认，必填字段                                                                                                           |
+| PASSWORD                            | 站长密码                 | 任意字符串               | 无默认，必填字段                                                                                                           |
+| SITE_BASE                           | 站点 url                 | 形如 https://example.com | 空                                                                                                                         |
+| NEXT_PUBLIC_SITE_NAME               | 站点名称                 | 任意字符串               | MyTV                                                                                                                       |
+| ANNOUNCEMENT                        | 站点公告                 | 任意字符串               | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
+| DATABASE_URL                        | PostgreSQL 连接字符串    | postgresql://...         | 无默认，必填字段                                                                                                           |
+| DATABASE_SSL                        | 是否启用 PostgreSQL SSL  | true/false               | 自动判断（本地默认 false，远程默认 true）                                                                                  |
+| NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数 | 1-50                     | 5                                                                                                                          |
+| NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式       | 见下方                   | direct                                                                                                                     |
+| NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL   | url prefix               | (空)                                                                                                                       |
+| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE | 豆瓣图片代理类型         | 见下方                   | direct                                                                                                                     |
+| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY      | 自定义豆瓣图片代理 URL   | url prefix               | (空)                                                                                                                       |
+| NEXT_PUBLIC_DISABLE_YELLOW_FILTER   | 关闭色情内容过滤         | true/false               | false                                                                                                                      |
+| NEXT_PUBLIC_FLUID_SEARCH            | 是否开启搜索接口流式输出 | true/ false              | true                                                                                                                       |
+| NEXT_PUBLIC_PROJECT_REPO_URL        | 项目仓库地址（可选）     | URL                      | 空                                                                                                                         |
+| NEXT_PUBLIC_VERSION_CHECK_URL       | 版本检查地址（可选）     | URL                      | 空                                                                                                                         |
+| NEXT_PUBLIC_CHANGELOG_URL           | 远程更新日志地址（可选） | URL                      | 空                                                                                                                         |
 
 NEXT_PUBLIC_DOUBAN_PROXY_TYPE 选项解释：
 

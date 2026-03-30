@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
@@ -24,7 +22,7 @@ function VersionDisplay() {
       try {
         const status = await checkForUpdates();
         setUpdateStatus(status);
-      } catch (_) {
+      } catch {
         // do nothing
       } finally {
         setIsChecking(false);
@@ -46,12 +44,13 @@ function VersionDisplay() {
       <span className='font-mono'>v{CURRENT_VERSION}</span>
       {!isChecking && updateStatus !== UpdateStatus.FETCH_FAILED && (
         <div
-          className={`flex items-center gap-1.5 ${updateStatus === UpdateStatus.HAS_UPDATE
-            ? 'text-yellow-600 dark:text-yellow-400'
-            : updateStatus === UpdateStatus.NO_UPDATE
-              ? 'text-green-600 dark:text-green-400'
-              : ''
-            }`}
+          className={`flex items-center gap-1.5 ${
+            updateStatus === UpdateStatus.HAS_UPDATE
+              ? 'text-yellow-600 dark:text-yellow-400'
+              : updateStatus === UpdateStatus.NO_UPDATE
+                ? 'text-green-600 dark:text-green-400'
+                : ''
+          }`}
         >
           {updateStatus === UpdateStatus.HAS_UPDATE && (
             <>
@@ -115,22 +114,20 @@ function LoginPageClient() {
         const data = await res.json().catch(() => ({}));
         setError(data.error ?? '服务器错误');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);
     }
   };
 
-
-
   return (
     <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
       <div className='absolute top-4 right-4'>
         <ThemeToggle />
       </div>
-      <div className='relative z-10 w-full max-w-md rounded-3xl bg-gradient-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 backdrop-blur-xl shadow-2xl p-10 dark:border dark:border-zinc-800'>
-        <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-8 bg-clip-text drop-shadow-sm'>
+      <div className='relative z-10 w-full max-w-md rounded-3xl bg-linear-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 backdrop-blur-xl shadow-2xl p-10 dark:border dark:border-zinc-800'>
+        <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-8 bg-clip-text drop-shadow-xs'>
           {siteName}
         </h1>
         <form onSubmit={handleSubmit} className='space-y-8'>
@@ -143,7 +140,7 @@ function LoginPageClient() {
                 id='username'
                 type='text'
                 autoComplete='username'
-                className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60 backdrop-blur'
+                className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-hidden sm:text-base bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm'
                 placeholder='输入用户名'
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -159,7 +156,7 @@ function LoginPageClient() {
               id='password'
               type='password'
               autoComplete='current-password'
-              className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60 backdrop-blur'
+              className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-hidden sm:text-base bg-white/60 dark:bg-zinc-800/60 backdrop-blur-sm'
               placeholder='输入访问密码'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -173,9 +170,7 @@ function LoginPageClient() {
           {/* 登录按钮 */}
           <button
             type='submit'
-            disabled={
-              !password || loading || (shouldAskUsername && !username)
-            }
+            disabled={!password || loading || (shouldAskUsername && !username)}
             className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-green-600 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50'
           >
             {loading ? '登录中...' : '登录'}

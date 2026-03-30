@@ -4,10 +4,10 @@ import Hls from 'hls.js';
 
 function getDoubanImageProxyConfig(): {
   proxyType:
-  | 'server'
-  | 'cmliussss-cdn-tencent'
-  | 'cmliussss-cdn-ali'
-  | 'custom';
+    | 'server'
+    | 'cmliussss-cdn-tencent'
+    | 'cmliussss-cdn-ali'
+    | 'custom';
   proxyUrl: string;
 } {
   let doubanImageProxyType =
@@ -46,12 +46,12 @@ export function processImageUrl(originalUrl: string): string {
     case 'cmliussss-cdn-tencent':
       return originalUrl.replace(
         /img\d+\.doubanio\.com/g,
-        'img.doubanio.cmliussss.net'
+        'img.doubanio.cmliussss.net',
       );
     case 'cmliussss-cdn-ali':
       return originalUrl.replace(
         /img\d+\.doubanio\.com/g,
-        'img.doubanio.cmliussss.com'
+        'img.doubanio.cmliussss.com',
       );
     case 'custom':
       return `${proxyUrl}${encodeURIComponent(originalUrl)}`;
@@ -210,8 +210,9 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
     });
   } catch (error) {
     throw new Error(
-      `Error getting video resolution: ${error instanceof Error ? error.message : String(error)
-      }`
+      `Error getting video resolution: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     );
   }
 }

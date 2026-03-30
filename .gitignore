@@ -1,0 +1,15 @@
+node_modules/
+.next/
+coverage/
+dist/
+build/
+.turbo/
+.cache/
+.vercel/
+
+public/manifest.json
+public/sw.js
+public/workbox-*.js
+
+*.log
+.DS_Store

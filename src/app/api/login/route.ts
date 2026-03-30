@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 // 生成签名
 async function generateSignature(
   data: string,
-  secret: string
+  secret: string,
 ): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -21,7 +21,7 @@ async function generateSignature(
     keyData,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   // 生成签名
@@ -42,7 +42,10 @@ async function generateAuthCookie(
 
   authData.username = username;
   // 使用密码作为密钥对用户名进行签名
-  const signature = await generateSignature(username, process.env.PASSWORD || '');
+  const signature = await generateSignature(
+    username,
+    process.env.PASSWORD || '',
+  );
   authData.signature = signature;
   authData.timestamp = Date.now(); // 添加时间戳防重放攻击
 
@@ -96,7 +99,7 @@ export async function POST(req: NextRequest) {
       if (!pass) {
         return NextResponse.json(
           { error: '用户名或密码错误' },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -104,7 +107,7 @@ export async function POST(req: NextRequest) {
       const response = NextResponse.json({ ok: true });
       const cookieValue = await generateAuthCookie(
         username,
-        user?.role || 'user'
+        user?.role || 'user',
       );
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期

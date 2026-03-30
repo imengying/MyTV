@@ -1,7 +1,7 @@
-import type { Config } from 'tailwindcss';
-import defaultTheme from 'tailwindcss/defaultTheme';
+/** @type {import('tailwindcss').Config} */
+const defaultTheme = require('tailwindcss/defaultTheme');
 
-const config: Config = {
+const config = {
   darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -10,11 +10,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      screens: {
-        'mobile-landscape': {
-          raw: '(orientation: landscape) and (max-height: 700px)',
-        },
-      },
       fontFamily: {
         primary: ['Inter', ...defaultTheme.fontFamily.sans],
       },
@@ -86,6 +81,6 @@ const config: Config = {
     },
   },
   plugins: [require('@tailwindcss/forms')],
-} satisfies Config;
+};
 
-export default config;
+module.exports = config;

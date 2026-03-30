@@ -17,7 +17,7 @@ function parseChangelog(content) {
 
     // 匹配版本行: ## [X.Y.Z] - YYYY-MM-DD
     const versionMatch = trimmedLine.match(
-      /^## \[([\d.]+)\] - (\d{4}-\d{2}-\d{2})$/
+      /^## \[([\d.]+)\] - (\d{4}-\d{2}-\d{2})$/,
     );
     if (versionMatch) {
       if (currentVersion) {
@@ -153,7 +153,7 @@ function updateVersionTs(version) {
     // 替换 CURRENT_VERSION 常量
     const updatedContent = content.replace(
       /const CURRENT_VERSION = ['"`][^'"`]+['"`];/,
-      `const CURRENT_VERSION = '${version}';`
+      `const CURRENT_VERSION = '${version}';`,
     );
 
     fs.writeFileSync(versionTsPath, updatedContent, 'utf8');
@@ -215,7 +215,7 @@ function main() {
     console.log(`📊 版本统计:`);
     changelogData.versions.forEach((version) => {
       console.log(
-        `   ${version.version} (${version.date}): +${version.added.length} ~${version.changed.length} !${version.fixed.length}`
+        `   ${version.version} (${version.date}): +${version.added.length} ~${version.changed.length} !${version.fixed.length}`,
       );
     });
 
