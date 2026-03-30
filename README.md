@@ -76,6 +76,28 @@
 - **Docker**：适合 VPS、NAS、面板或本地服务器，推荐配合 PostgreSQL 容器使用。
 - **Vercel**：适合快速上线，推荐搭配外部 PostgreSQL 服务使用。
 
+### Tag 发布到 Vercel
+
+如果你希望只有在打 Git tag 时才推送到 Vercel，可以使用仓库内置的 tag 部署工作流：
+
+1. 在 Vercel 项目中关闭 Git 自动部署。
+   当前仓库的 `vercel.json` 已将 `git.deploymentEnabled` 设为 `false`。
+2. 在 GitHub 仓库 Secrets 中配置以下 3 个值：
+   - `VERCEL_TOKEN`
+   - `VERCEL_ORG_ID`
+   - `VERCEL_PROJECT_ID`
+3. 推送普通提交时只会运行 CI，不会部署到 Vercel。
+4. 只有推送形如 `v1.2.3` 的 tag 时，才会触发 `.github/workflows/deploy-vercel-tag.yml` 并部署生产环境。
+
+示例：
+
+```bash
+git tag v100.1.3
+git push origin v100.1.3
+```
+
+项目版本会优先跟随 git tag，并同步到 `src/lib/version.ts`。
+
 ### Vercel 部署（推荐 PostgreSQL）
 
 1. Fork 本仓库到你自己的 GitHub 账号。

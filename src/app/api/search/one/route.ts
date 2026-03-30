@@ -7,7 +7,7 @@ import { yellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
 
-// OrionTV 兼容接口
+// 兼容外部客户端的单源搜索接口
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {

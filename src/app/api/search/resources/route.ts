@@ -5,7 +5,7 @@ import { getAvailableApiSites } from '@/lib/config';
 
 export const runtime = 'nodejs';
 
-// OrionTV 兼容接口
+// 兼容外部客户端的资源列表接口
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
