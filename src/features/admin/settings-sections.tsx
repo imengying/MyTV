@@ -280,7 +280,6 @@ export const SiteConfigComponent = ({
 
   const doubanDataSourceOptions = [
     { value: 'direct', label: '直连（服务器直接请求豆瓣）' },
-    { value: 'cors-proxy-zwei', label: 'Cors Proxy By Zwei' },
     {
       value: 'cmliussss-cdn-tencent',
       label: '豆瓣 CDN By CMLiussss（腾讯云）',
@@ -301,11 +300,6 @@ export const SiteConfigComponent = ({
 
   const getThanksInfo = (dataSource: string) => {
     switch (dataSource) {
-      case 'cors-proxy-zwei':
-        return {
-          text: 'Thanks to @Zwei',
-          url: 'https://github.com/bestzwei',
-        };
       case 'cmliussss-cdn-tencent':
       case 'cmliussss-cdn-ali':
         return {
@@ -322,7 +316,9 @@ export const SiteConfigComponent = ({
       setSiteSettings({
         ...config.SiteConfig,
         DoubanProxyType:
-          config.SiteConfig.DoubanProxyType || 'cmliussss-cdn-tencent',
+          config.SiteConfig.DoubanProxyType === 'cors-proxy-zwei'
+            ? 'cmliussss-cdn-tencent'
+            : config.SiteConfig.DoubanProxyType || 'cmliussss-cdn-tencent',
         DoubanProxy: config.SiteConfig.DoubanProxy || '',
         DoubanImageProxyType:
           config.SiteConfig.DoubanImageProxyType === 'direct' ||

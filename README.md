@@ -203,7 +203,6 @@ GitHub 仓库需要配置这 3 个 Secrets：
   [ArtPlayer](https://github.com/zhw2590582/ArtPlayer)
   [HLS.js](https://github.com/video-dev/hls.js)
 - 豆瓣代理与 CDN 支持：
-  [Zwei](https://github.com/bestzwei)
   [CMLiussss](https://github.com/cmliu)
 - 灵感来源：
   [LunaTV](https://github.com/MoonTechLab/LunaTV)

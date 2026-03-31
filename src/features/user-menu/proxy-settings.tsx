@@ -7,7 +7,6 @@ import {
 
 const doubanDataSourceOptions = [
   { value: 'direct', label: '直连（服务器直接请求豆瓣）' },
-  { value: 'cors-proxy-zwei', label: 'Cors Proxy By Zwei' },
   {
     value: 'cmliussss-cdn-tencent',
     label: '豆瓣 CDN By CMLiussss（腾讯云）',
@@ -28,11 +27,6 @@ const doubanImageProxyTypeOptions = [
 
 const getThanksInfo = (dataSource: string) => {
   switch (dataSource) {
-    case 'cors-proxy-zwei':
-      return {
-        text: 'Thanks to @Zwei',
-        url: 'https://github.com/bestzwei',
-      };
     case 'cmliussss-cdn-tencent':
     case 'cmliussss-cdn-ali':
       return {

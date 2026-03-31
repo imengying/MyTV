@@ -17,6 +17,9 @@ interface RuntimeWindow extends Window {
 const normalizeImageProxyType = (type: string) =>
   type === 'direct' || type === 'img3' ? 'server' : type;
 
+const normalizeDataProxyType = (type: string) =>
+  type === 'cors-proxy-zwei' ? 'cmliussss-cdn-tencent' : type;
+
 const getRuntimeConfig = (): RuntimeConfig => {
   if (typeof window === 'undefined') return {};
   return (window as RuntimeWindow).RUNTIME_CONFIG || {};
@@ -51,9 +54,9 @@ export const useUserSettings = () => {
     const defaultDoubanProxyType =
       runtimeConfig.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
     if (savedDoubanDataSource !== null) {
-      setDoubanDataSource(savedDoubanDataSource);
+      setDoubanDataSource(normalizeDataProxyType(savedDoubanDataSource));
     } else if (defaultDoubanProxyType) {
-      setDoubanDataSource(defaultDoubanProxyType);
+      setDoubanDataSource(normalizeDataProxyType(defaultDoubanProxyType));
     }
 
     const savedDoubanProxyUrl = localStorage.getItem('doubanProxyUrl');
@@ -152,8 +155,9 @@ export const useUserSettings = () => {
   };
 
   const handleDoubanDataSourceChange = (value: string) => {
-    setDoubanDataSource(value);
-    localStorage.setItem('doubanDataSource', value);
+    const normalizedValue = normalizeDataProxyType(value);
+    setDoubanDataSource(normalizedValue);
+    localStorage.setItem('doubanDataSource', normalizedValue);
   };
 
   const handleDoubanImageProxyTypeChange = (value: string) => {
@@ -168,8 +172,9 @@ export const useUserSettings = () => {
 
   const handleResetSettings = () => {
     const runtimeConfig = getRuntimeConfig();
-    const defaultDoubanProxyType =
-      runtimeConfig.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
+    const defaultDoubanProxyType = normalizeDataProxyType(
+      runtimeConfig.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent',
+    );
     const defaultDoubanProxy = runtimeConfig.DOUBAN_PROXY || '';
     let defaultDoubanImageProxyType =
       runtimeConfig.DOUBAN_IMAGE_PROXY_TYPE || 'cmliussss-cdn-tencent';

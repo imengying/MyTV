@@ -4,7 +4,6 @@ import { type DoubanItem } from './types';
 
 export type DoubanProxyType =
   | 'direct'
-  | 'cors-proxy-zwei'
   | 'cmliussss-cdn-tencent'
   | 'cmliussss-cdn-ali'
   | 'cors-anywhere'
@@ -137,8 +136,13 @@ export function getDoubanProxyConfig(): {
     runtimeConfig?.DOUBAN_PROXY ||
     '';
 
+  const normalizedProxyType =
+    proxyType === 'cors-proxy-zwei'
+      ? 'cmliussss-cdn-tencent'
+      : (proxyType as DoubanProxyType);
+
   return {
-    proxyType: proxyType as DoubanProxyType,
+    proxyType: normalizedProxyType,
     proxyUrl,
   };
 }
@@ -175,8 +179,6 @@ export function buildProxyAwareRequest<T>(
   fetcher: (proxyUrl: string, useTencentCDN?: boolean, useAliCDN?: boolean) => Promise<T>,
 ) {
   switch (proxyType) {
-    case 'cors-proxy-zwei':
-      return fetcher('https://ciao-cors.is-an.org/');
     case 'cmliussss-cdn-tencent':
       return fetcher('', true, false);
     case 'cmliussss-cdn-ali':
