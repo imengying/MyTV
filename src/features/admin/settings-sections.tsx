@@ -601,7 +601,7 @@ export const SiteConfigComponent = ({
             )}
           </div>
           <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-            选择获取豆瓣图片的方式
+            只影响豆瓣封面，资源站封面始终直连
           </p>
 
           {getThanksInfo(siteSettings.DoubanImageProxyType) && (
@@ -643,7 +643,7 @@ export const SiteConfigComponent = ({
               className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-xs hover:border-gray-400 dark:hover:border-gray-500'
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              自定义图片代理服务器地址
+              自定义豆瓣封面代理地址
             </p>
           </div>
         )}

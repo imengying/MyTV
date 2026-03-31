@@ -27,7 +27,7 @@ import {
   saveFavorite,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import { processImageUrl } from '@/lib/utils';
+import { isDoubanImageUrl, processImageUrl } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
@@ -598,12 +598,14 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               loading='lazy'
               onLoadingComplete={() => setIsLoading(true)}
               onError={(e) => {
-                // 图片加载失败时的重试机制
+                // 豆瓣封面优先走代理/CDN，失败后回退原始直链一次。
                 const img = e.target as HTMLImageElement;
                 if (!img.dataset.retried) {
                   img.dataset.retried = 'true';
                   setTimeout(() => {
-                    img.src = processImageUrl(actualPoster);
+                    img.src = isDoubanImageUrl(actualPoster)
+                      ? processImageUrl(actualPoster, { preferDirect: true })
+                      : actualPoster;
                   }, 2000);
                 }
               }}

@@ -24,14 +24,21 @@ function getDoubanImageProxyConfig(): {
   };
 }
 
+export function isDoubanImageUrl(originalUrl: string): boolean {
+  return originalUrl.includes('doubanio.com');
+}
+
 /**
- * 处理图片 URL，如果设置了图片代理则使用代理
+ * 处理图片 URL。
+ * 普通资源站封面始终直连，只有豆瓣封面会按设置走代理或 CDN。
  */
-export function processImageUrl(originalUrl: string): string {
+export function processImageUrl(
+  originalUrl: string,
+  options?: { preferDirect?: boolean },
+): string {
   if (!originalUrl) return originalUrl;
 
-  // 仅处理豆瓣图片代理
-  if (!originalUrl.includes('doubanio.com')) {
+  if (!isDoubanImageUrl(originalUrl) || options?.preferDirect) {
     return originalUrl;
   }
 
@@ -50,7 +57,9 @@ export function processImageUrl(originalUrl: string): string {
         'img.doubanio.cmliussss.com',
       );
     case 'custom':
-      return `${proxyUrl}${encodeURIComponent(originalUrl)}`;
+      return proxyUrl
+        ? `${proxyUrl}${encodeURIComponent(originalUrl)}`
+        : originalUrl;
     default:
       return `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`;
   }

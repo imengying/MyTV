@@ -4,7 +4,7 @@ import { Heart } from 'lucide-react';
 import { type RefObject } from 'react';
 
 import { type SearchResult } from '@/lib/types';
-import { processImageUrl } from '@/lib/utils';
+import { isDoubanImageUrl, processImageUrl } from '@/lib/utils';
 
 import EpisodeSelector from '@/components/EpisodeSelector';
 import PageLayout from '@/components/PageLayout';
@@ -309,6 +309,15 @@ export const PlayDetailsSection = ({
                   src={processImageUrl(videoCover)}
                   alt={videoTitle}
                   className='w-full h-full object-cover'
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (!target.dataset.retried && isDoubanImageUrl(videoCover)) {
+                      target.dataset.retried = 'true';
+                      target.src = processImageUrl(videoCover, {
+                        preferDirect: true,
+                      });
+                    }
+                  }}
                 />
 
                 {videoDoubanId !== 0 && (

@@ -59,7 +59,7 @@ export const DoubanDataProxySection = ({
     <SettingsSelect
       dropdownKey='douban-datasource'
       title='豆瓣数据代理'
-      description='选择获取豆瓣数据的方式'
+      description='只影响豆瓣分类页数据，不影响普通视频封面'
       value={value}
       options={doubanDataSourceOptions}
       isOpen={isOpen}
@@ -100,8 +100,8 @@ export const DoubanImageProxySection = ({
   <>
     <SettingsSelect
       dropdownKey='douban-image-proxy'
-      title='豆瓣图片代理'
-      description='选择获取豆瓣图片的方式'
+      title='豆瓣封面策略'
+      description='只影响豆瓣封面，资源站封面始终直连'
       value={value}
       options={doubanImageProxyTypeOptions}
       isOpen={isOpen}
@@ -112,8 +112,8 @@ export const DoubanImageProxySection = ({
 
     {value === 'custom' && (
       <SettingsTextInput
-        title='豆瓣图片代理地址'
-        description='自定义图片代理服务器地址'
+        title='豆瓣封面代理地址'
+        description='自定义豆瓣封面代理地址'
         placeholder='例如: https://proxy.example.com/fetch?url='
         value={proxyUrl}
         onChange={onProxyUrlChange}

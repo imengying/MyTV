@@ -10,7 +10,11 @@ import React, {
 } from 'react';
 
 import { SearchResult } from '@/lib/types';
-import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
+import {
+  getVideoResolutionFromM3u8,
+  isDoubanImageUrl,
+  processImageUrl,
+} from '@/lib/utils';
 
 // 定义视频信息类型
 interface VideoInfo {
@@ -566,6 +570,16 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                               className='w-full h-full object-cover'
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
+                                if (
+                                  !target.dataset.retried &&
+                                  isDoubanImageUrl(source.poster)
+                                ) {
+                                  target.dataset.retried = 'true';
+                                  target.src = processImageUrl(source.poster, {
+                                    preferDirect: true,
+                                  });
+                                  return;
+                                }
                                 target.style.display = 'none';
                               }}
                             />
