@@ -5,6 +5,19 @@ const nextConfig = {
 
   reactStrictMode: false,
 
+  async rewrites() {
+    return [
+      {
+        source: '/favicon.ico',
+        destination: '/logo.svg',
+      },
+      {
+        source: '/icons/:path*',
+        destination: '/logo.svg',
+      },
+    ];
+  },
+
   // Uncoment to add domain whitelist
   images: {
     unoptimized: true,
