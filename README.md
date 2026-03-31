@@ -109,8 +109,9 @@ git push origin v100.1.3
 USERNAME=admin
 PASSWORD=your_secure_password
 SITE_BASE=https://your-project.vercel.app
-DATABASE_URL=postgresql://user:password@host:5432/mytv
+DATABASE_URL=postgresql://user:password@host:5432/mytv?sslmode=require
 DATABASE_SSL=true
+DATABASE_POOL_MAX=4
 ```
 
 5. 部署完成后访问 `/login` 登录。
@@ -227,6 +228,10 @@ dockge/komodo 等 docker compose UI 也有自动更新功能
 | ANNOUNCEMENT                        | 站点公告                 | 任意字符串               | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
 | DATABASE_URL                        | PostgreSQL 连接字符串    | postgresql://...         | 无默认，必填字段                                                                                                           |
 | DATABASE_SSL                        | 是否启用 PostgreSQL SSL  | true/false               | 自动判断（本地默认 false，远程默认 true）                                                                                  |
+| DATABASE_SSL_REJECT_UNAUTHORIZED    | 是否严格校验证书链       | true/false               | false                                                                                                                      |
+| DATABASE_POOL_MAX                   | 连接池最大连接数         | 正整数                   | 默认 4                                                                                                                     |
+| DATABASE_IDLE_TIMEOUT_MS            | 空闲连接回收时间         | 毫秒                     | Vercel 默认 5000，其他环境默认 30000                                                                                       |
+| DATABASE_CONNECT_TIMEOUT_MS         | 连接超时时间             | 毫秒                     | 10000                                                                                                                      |
 | NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数 | 1-50                     | 5                                                                                                                          |
 | NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式       | 见下方                   | direct                                                                                                                     |
 | NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL   | url prefix               | (空)                                                                                                                       |

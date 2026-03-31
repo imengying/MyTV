@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { Pool, QueryResult, QueryResultRow } from 'pg';
+import { Pool, PoolConfig, QueryResult, QueryResultRow } from 'pg';
 
 import { AdminConfig } from './admin.types';
 import { hashPassword, isHashed, verifyPassword } from './password';
@@ -83,6 +83,59 @@ function shouldUseSsl(connectionString: string): boolean {
   return !/(localhost|127\.0\.0\.1)/.test(connectionString);
 }
 
+function shouldRejectUnauthorized(sslMode: string | null): boolean {
+  if (process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true') {
+    return true;
+  }
+
+  return sslMode === 'verify-ca' || sslMode === 'verify-full';
+}
+
+function buildPoolConfig(connectionString: string): PoolConfig {
+  const defaultPoolMax = 4;
+  const defaultIdleTimeoutMs = process.env.VERCEL ? 5000 : 30000;
+
+  let sanitizedConnectionString = connectionString;
+  let sslMode: string | null = null;
+
+  try {
+    const connectionUrl = new URL(connectionString);
+    sslMode = connectionUrl.searchParams.get('sslmode')?.toLowerCase() || null;
+
+    // node-postgres 会让 connectionString 中的 sslmode 覆盖 ssl 对象。
+    // 这里先移除相关参数，再统一用代码生成兼容自签证书的 ssl 配置。
+    connectionUrl.searchParams.delete('sslmode');
+    connectionUrl.searchParams.delete('sslcert');
+    connectionUrl.searchParams.delete('sslkey');
+    connectionUrl.searchParams.delete('sslrootcert');
+
+    sanitizedConnectionString = connectionUrl.toString();
+  } catch {
+    // 保持原始连接串，继续使用基于字符串的兜底判断。
+  }
+
+  const sslEnabled =
+    sslMode === 'disable'
+      ? false
+      : shouldUseSsl(sanitizedConnectionString);
+
+  return {
+    connectionString: sanitizedConnectionString,
+    max: Number(process.env.DATABASE_POOL_MAX || defaultPoolMax),
+    idleTimeoutMillis: Number(
+      process.env.DATABASE_IDLE_TIMEOUT_MS || defaultIdleTimeoutMs,
+    ),
+    connectionTimeoutMillis: Number(
+      process.env.DATABASE_CONNECT_TIMEOUT_MS || 10000,
+    ),
+    ssl: sslEnabled
+      ? {
+          rejectUnauthorized: shouldRejectUnauthorized(sslMode),
+        }
+      : undefined,
+  };
+}
+
 function getPool(): Pool {
   if (!globalPostgres.__mytvPgPool) {
     const connectionString = process.env.DATABASE_URL;
@@ -91,17 +144,7 @@ function getPool(): Pool {
       throw new Error('DATABASE_URL env variable not set');
     }
 
-    globalPostgres.__mytvPgPool = new Pool({
-      connectionString,
-      max: Number(process.env.DATABASE_POOL_MAX || 10),
-      idleTimeoutMillis: Number(process.env.DATABASE_IDLE_TIMEOUT_MS || 30000),
-      connectionTimeoutMillis: Number(
-        process.env.DATABASE_CONNECT_TIMEOUT_MS || 10000,
-      ),
-      ssl: shouldUseSsl(connectionString)
-        ? { rejectUnauthorized: false }
-        : undefined,
-    });
+    globalPostgres.__mytvPgPool = new Pool(buildPoolConfig(connectionString));
 
     globalPostgres.__mytvPgPool.on('error', (error: Error) => {
       console.error('PostgreSQL pool error:', error);
