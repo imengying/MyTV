@@ -87,7 +87,7 @@
    - `VERCEL_ORG_ID`
    - `VERCEL_PROJECT_ID`
 3. 推送普通提交时只会运行 CI，不会部署到 Vercel。
-4. 只有推送形如 `v1.2.3` 的 tag 时，才会触发 `.github/workflows/deploy-vercel-tag.yml` 并部署生产环境。
+4. 只有推送形如 `v1.2.3` 的 tag 时，才会触发 `.github/workflows/vercel.yml` 并部署生产环境。
 
 示例：
 

@@ -6,6 +6,10 @@ env:
 
 on:
   push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '*'
 
 concurrency:
   group: ci-${{ github.ref }}
