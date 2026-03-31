@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -19,6 +19,7 @@ import VideoCard from '@/components/VideoCard';
 import VirtualGrid from '@/components/VirtualGrid';
 
 function DoubanPageClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,15 +40,20 @@ function DoubanPageClient() {
   });
 
   const searchType = searchParams.get('type') || 'movie';
-  const type = ['movie', 'tv', 'show', 'anime', 'short'].includes(searchType)
+  const searchPreset = searchParams.get('preset') || '';
+  const type = ['movie', 'tv', 'show', 'anime'].includes(searchType)
     ? searchType
-    : 'movie';
+    : searchType === 'short'
+      ? 'tv'
+      : 'movie';
+  const isShortPreset =
+    searchType === 'short' || (type === 'tv' && searchPreset === 'short');
 
   const [primarySelection, setPrimarySelection] = useState<string>(() => {
     if (type === 'movie') return '热门';
-    if (type === 'tv' || type === 'show') return '最近热门';
+    if (type === 'tv') return isShortPreset ? '短剧' : '最近热门';
+    if (type === 'show') return '最近热门';
     if (type === 'anime') return '全部';
-    if (type === 'short') return '全部';
     return '';
   });
   const [secondarySelection, setSecondarySelection] = useState<string>(() => {
@@ -92,19 +98,39 @@ function DoubanPageClient() {
   }, [type]);
 
   useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (type === 'tv' && primarySelection === '短剧') {
+      params.set('type', 'tv');
+      params.set('preset', 'short');
+    } else {
+      if (searchType === 'short') {
+        params.set('type', 'tv');
+      }
+      params.delete('preset');
+    }
+
+    const currentQuery = searchParams.toString();
+    const nextQuery = params.toString();
+
+    if (currentQuery !== nextQuery) {
+      router.replace(`/douban${nextQuery ? `?${nextQuery}` : ''}`, {
+        scroll: false,
+      });
+    }
+  }, [primarySelection, router, searchParams, searchType, type]);
+
+  useEffect(() => {
     if (type === 'movie') {
       setPrimarySelection('热门');
       setSecondarySelection('全部');
     } else if (type === 'tv') {
-      setPrimarySelection('最近热门');
+      setPrimarySelection(isShortPreset ? '短剧' : '最近热门');
       setSecondarySelection('tv');
     } else if (type === 'show') {
       setPrimarySelection('最近热门');
       setSecondarySelection('show');
     } else if (type === 'anime') {
-      setPrimarySelection('全部');
-      setSecondarySelection('全部');
-    } else if (type === 'short') {
       setPrimarySelection('全部');
       setSecondarySelection('全部');
     } else {
@@ -126,7 +152,7 @@ function DoubanPageClient() {
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [type]);
+  }, [isShortPreset, type]);
 
   const skeletonData = Array.from({ length: 25 }, (_, index) => index);
 
@@ -219,7 +245,7 @@ function DoubanPageClient() {
             ? (multiLevelValues.label as string)
             : '',
         });
-      } else if (type === 'short') {
+      } else if (type === 'tv' && primarySelection === '短剧') {
         data = await getDoubanRecommends({
           kind: 'tv',
           pageLimit: 25,
@@ -357,7 +383,7 @@ function DoubanPageClient() {
               ? (multiLevelValues.label as string)
               : '',
           });
-        } else if (type === 'short') {
+        } else if (type === 'tv' && primarySelection === '短剧') {
           data = await getDoubanRecommends({
             kind: 'tv',
             pageLimit: 25,
@@ -492,6 +518,9 @@ function DoubanPageClient() {
           } else if (type === 'show') {
             setSecondarySelection('show');
           }
+        } else if (type === 'tv' && value === '短剧') {
+          setPrimarySelection(value);
+          setSecondarySelection('tv');
         } else {
           setPrimarySelection(value);
         }
@@ -546,18 +575,16 @@ function DoubanPageClient() {
     return type === 'movie'
       ? '电影'
       : type === 'tv'
-        ? '电视剧'
+        ? '剧集'
         : type === 'anime'
           ? '动漫'
-          : type === 'short'
-            ? '短剧'
           : '综艺';
   };
 
   const getPageDescription = () =>
     type === 'anime'
       ? '来自豆瓣的动画精选内容'
-      : type === 'short'
+      : type === 'tv' && primarySelection === '短剧'
         ? '来自豆瓣的短剧与微短剧精选内容'
         : '来自豆瓣的精选内容';
 
@@ -584,7 +611,7 @@ function DoubanPageClient() {
 
           <div className='bg-white/60 dark:bg-gray-800/40 rounded-2xl p-4 sm:p-6 border border-gray-200/30 dark:border-gray-700/30 backdrop-blur-xs'>
             <DoubanSelector
-              type={type as 'movie' | 'tv' | 'show' | 'anime' | 'short'}
+              type={type as 'movie' | 'tv' | 'show' | 'anime'}
               primarySelection={primarySelection}
               secondarySelection={secondarySelection}
               onPrimaryChange={handlePrimaryChange}

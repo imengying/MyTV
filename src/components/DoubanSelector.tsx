@@ -12,7 +12,7 @@ interface SelectorOption {
 }
 
 interface DoubanSelectorProps {
-  type: 'movie' | 'tv' | 'show' | 'anime' | 'short';
+  type: 'movie' | 'tv' | 'show' | 'anime';
   primarySelection?: string;
   secondarySelection?: string;
   onPrimaryChange: (value: string) => void;
@@ -65,6 +65,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
   const tvPrimaryOptions: SelectorOption[] = [
     { label: '全部', value: '全部' },
     { label: '最近热门', value: '最近热门' },
+    { label: '短剧', value: '短剧' },
   ];
 
   // 电视剧二级选择器选项
@@ -391,7 +392,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
             </div>
           </div>
 
-          {/* 二级选择器 - 只在选中"最近热门"时显示，选中"全部"时显示多级选择器 */}
+          {/* 二级选择器 - 选中“最近热门”时显示；选中“全部/短剧”时显示多级筛选 */}
           {(primarySelection || tvPrimaryOptions[1].value) === '最近热门' ? (
             <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
               <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
@@ -406,8 +407,10 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                 )}
               </div>
             </div>
-          ) : (primarySelection || tvPrimaryOptions[1].value) === '全部' ? (
-            /* 多级选择器 - 只在选中"全部"时显示 */
+          ) : ['全部', '短剧'].includes(
+              primarySelection || tvPrimaryOptions[1].value,
+            ) ? (
+            /* 多级选择器 - 选中“全部”或“短剧”时显示 */
             <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
               <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
                 筛选
@@ -492,22 +495,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         </div>
       )}
 
-      {type === 'short' && (
-        <div className='space-y-3 sm:space-y-4'>
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-              筛选
-            </span>
-            <div className='overflow-x-auto'>
-              <MultiLevelSelector
-                key='short'
-                onChange={handleMultiLevelChange}
-                contentType='tv'
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

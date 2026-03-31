@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Cat, Clapperboard, Clover, Film, Home, Tv } from 'lucide-react';
+import { Cat, Clover, Film, Home, Tv } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -36,11 +36,6 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       icon: Cat,
       label: '动漫',
       href: '/douban?type=anime',
-    },
-    {
-      icon: Clapperboard,
-      label: '短剧',
-      href: '/douban?type=short',
     },
     {
       icon: Clover,
