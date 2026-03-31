@@ -2,10 +2,10 @@
 
 'use client';
 
-import { Clover, Film, Home, Star, Tv } from 'lucide-react';
+import { Cat, Clapperboard, Clover, Film, Home, Tv } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface MobileBottomNavProps {
   /**
@@ -33,25 +33,21 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       href: '/douban?type=tv',
     },
     {
+      icon: Cat,
+      label: '动漫',
+      href: '/douban?type=anime',
+    },
+    {
+      icon: Clapperboard,
+      label: '短剧',
+      href: '/douban?type=short',
+    },
+    {
       icon: Clover,
       label: '综艺',
       href: '/douban?type=show',
     },
   ]);
-
-  useEffect(() => {
-    const runtimeConfig = (window as any).RUNTIME_CONFIG;
-    if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
-      setNavItems((prevItems) => [
-        ...prevItems,
-        {
-          icon: Star,
-          label: '自定义',
-          href: '/douban?type=custom',
-        },
-      ]);
-    }
-  }, []);
 
   const isActive = (href: string) => {
     const typeMatch = href.match(/type=([^&]+)/)?.[1];
@@ -84,7 +80,10 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
             <li
               key={item.href}
               className='shrink-0'
-              style={{ width: '20vw', minWidth: '20vw' }}
+              style={{
+                width: `${100 / navItems.length}vw`,
+                minWidth: `${100 / navItems.length}vw`,
+              }}
             >
               <Link
                 href={item.href}

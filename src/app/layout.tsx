@@ -19,6 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: config.SiteConfig.SiteName,
     description: '影视聚合',
+    icons: {
+      icon: '/logo.svg',
+      shortcut: '/logo.svg',
+      apple: '/logo.svg',
+    },
   };
 }
 
@@ -41,17 +46,6 @@ export default async function RootLayout({
   const doubanImageProxy = config.SiteConfig.DoubanImageProxy;
   const disableYellowFilter = config.SiteConfig.DisableYellowFilter;
   const fluidSearch = config.SiteConfig.FluidSearch;
-  const customCategories = config.CustomCategories.filter(
-    (category) => !category.disabled,
-  ).map((category) => ({
-    name: category.name || '',
-    type: category.type,
-    query: category.query,
-  })) as {
-    name: string;
-    type: 'movie' | 'tv';
-    query: string;
-  }[];
 
   // 将运行时配置注入到全局 window 对象，供客户端在运行时读取
   const runtimeConfig = {
@@ -60,7 +54,6 @@ export default async function RootLayout({
     DOUBAN_IMAGE_PROXY_TYPE: doubanImageProxyType,
     DOUBAN_IMAGE_PROXY: doubanImageProxy,
     DISABLE_YELLOW_FILTER: disableYellowFilter,
-    CUSTOM_CATEGORIES: customCategories,
     FLUID_SEARCH: fluidSearch,
   };
 

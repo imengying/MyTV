@@ -100,6 +100,10 @@ export class DbManager {
     await dbUsers.changePassword(this.storage, userName, newPassword);
   }
 
+  async getStoredPassword(userName: string): Promise<string | null> {
+    return dbUsers.getStoredPassword(this.storage, userName);
+  }
+
   async deleteUser(userName: string): Promise<void> {
     await dbUsers.deleteUser(this.storage, userName);
   }

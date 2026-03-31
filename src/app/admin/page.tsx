@@ -2,17 +2,17 @@
 
 'use client';
 
-import { FileText, FolderOpen, Settings, Users, Video } from 'lucide-react';
+import { Database, FileText, Settings, Users, Video } from 'lucide-react';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
+import DataBackup from '@/components/DataBackup';
 import PageLayout from '@/components/PageLayout';
 import { ResetConfigModal } from '@/features/admin/reset-config-modal';
 import {
   ConfigFileComponent,
   SiteConfigComponent,
 } from '@/features/admin/settings-sections';
-import { CategoryConfig } from '@/features/admin/category-config';
 import { UserConfig } from '@/features/admin/user-config';
 import { VideoSourceConfig } from '@/features/admin/video-source-config';
 import {
@@ -38,8 +38,8 @@ function AdminPageClient() {
     userConfig: false,
     videoSource: false,
     siteConfig: false,
-    categoryConfig: false,
     configFile: false,
+    dataBackup: false,
   });
 
   // 获取管理员配置
@@ -216,20 +216,21 @@ function AdminPageClient() {
               <VideoSourceConfig config={config} refreshConfig={fetchConfig} />
             </CollapsibleTab>
 
-            {/* 分类配置标签 */}
-            <CollapsibleTab
-              title='分类配置'
-              icon={
-                <FolderOpen
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.categoryConfig}
-              onToggle={() => toggleTab('categoryConfig')}
-            >
-              <CategoryConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
+            {role === 'owner' && (
+              <CollapsibleTab
+                title='数据备份'
+                icon={
+                  <Database
+                    size={20}
+                    className='text-gray-600 dark:text-gray-400'
+                  />
+                }
+                isExpanded={expandedTabs.dataBackup}
+                onToggle={() => toggleTab('dataBackup')}
+              >
+                <DataBackup onRefreshConfig={fetchConfig} />
+              </CollapsibleTab>
+            )}
           </div>
         </div>
       </div>

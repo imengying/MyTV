@@ -2,23 +2,21 @@
 
 import { db } from '@/lib/db';
 
-import { type AdminConfig } from './admin.types';
+import {
+  DEFAULT_CONFIG_SUBSCRIPTION,
+  type AdminConfig,
+  type ConfigSubscription,
+} from './admin.types';
 import { parseConfigFile } from './config.shared';
-
-const DEFAULT_CONFIG_SUBSCRIPTION: AdminConfig['ConfigSubscribtion'] = {
-  URL: '',
-  AutoUpdate: false,
-  LastCheck: '',
-};
 
 export async function createInitialConfig(
   configFile: string,
-  subConfig: AdminConfig['ConfigSubscribtion'] = DEFAULT_CONFIG_SUBSCRIPTION,
+  subConfig: ConfigSubscription = DEFAULT_CONFIG_SUBSCRIPTION,
 ): Promise<AdminConfig> {
   const cfgFile = parseConfigFile(configFile);
   const adminConfig: AdminConfig = {
     ConfigFile: configFile,
-    ConfigSubscribtion: subConfig,
+    ConfigSubscription: subConfig,
     SiteConfig: {
       SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'MyTV',
       Announcement:
@@ -42,7 +40,6 @@ export async function createInitialConfig(
       Users: [],
     },
     SourceConfig: [],
-    CustomCategories: [],
   };
 
   let userNames: string[] = [];
@@ -80,16 +77,5 @@ export async function createInitialConfig(
       disabled: false,
     });
   });
-
-  cfgFile.custom_category?.forEach((category) => {
-    adminConfig.CustomCategories.push({
-      name: category.name || category.query,
-      type: category.type,
-      query: category.query,
-      from: 'config',
-      disabled: false,
-    });
-  });
-
   return adminConfig;
 }

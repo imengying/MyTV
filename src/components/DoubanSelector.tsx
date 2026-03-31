@@ -12,7 +12,7 @@ interface SelectorOption {
 }
 
 interface DoubanSelectorProps {
-  type: 'movie' | 'tv' | 'show';
+  type: 'movie' | 'tv' | 'show' | 'anime' | 'short';
   primarySelection?: string;
   secondarySelection?: string;
   onPrimaryChange: (value: string) => void;
@@ -472,6 +472,40 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
               </div>
             </div>
           ) : null}
+        </div>
+      )}
+
+      {type === 'anime' && (
+        <div className='space-y-3 sm:space-y-4'>
+          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
+            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+              筛选
+            </span>
+            <div className='overflow-x-auto'>
+              <MultiLevelSelector
+                key='anime'
+                onChange={handleMultiLevelChange}
+                contentType='tv'
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {type === 'short' && (
+        <div className='space-y-3 sm:space-y-4'>
+          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
+            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+              筛选
+            </span>
+            <div className='overflow-x-auto'>
+              <MultiLevelSelector
+                key='short'
+                onChange={handleMultiLevelChange}
+                contentType='tv'
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

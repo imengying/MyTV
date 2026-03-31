@@ -47,10 +47,10 @@ export const ConfigFileComponent = ({
     if (config?.ConfigFile) {
       setConfigContent(config.ConfigFile);
     }
-    if (config?.ConfigSubscribtion) {
-      setSubscriptionUrl(config.ConfigSubscribtion.URL);
-      setAutoUpdate(config.ConfigSubscribtion.AutoUpdate);
-      setLastCheckTime(config.ConfigSubscribtion.LastCheck || '');
+    if (config?.ConfigSubscription) {
+      setSubscriptionUrl(config.ConfigSubscription.URL);
+      setAutoUpdate(config.ConfigSubscription.AutoUpdate);
+      setLastCheckTime(config.ConfigSubscription.LastCheck || '');
     }
   }, [config]);
 
@@ -227,7 +227,7 @@ export const ConfigFileComponent = ({
 
         <div className='flex items-center justify-between'>
           <div className='text-xs text-gray-500 dark:text-gray-400'>
-            支持 JSON 格式，用于配置视频源和自定义分类
+            支持 JSON 格式，用于配置视频源
           </div>
           <button
             onClick={handleSave}

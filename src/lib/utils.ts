@@ -10,14 +10,10 @@ function getDoubanImageProxyConfig(): {
     | 'custom';
   proxyUrl: string;
 } {
-  let doubanImageProxyType =
+  const doubanImageProxyType =
     localStorage.getItem('doubanImageProxyType') ||
     (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
     'cmliussss-cdn-tencent';
-  // 兼容历史数据：直连和豆瓣官方精品 CDN 统一使用服务器代理
-  if (doubanImageProxyType === 'direct' || doubanImageProxyType === 'img3') {
-    doubanImageProxyType = 'server';
-  }
   const doubanImageProxy =
     localStorage.getItem('doubanImageProxyUrl') ||
     (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY ||

@@ -21,7 +21,6 @@
 
 - 空壳项目：默认不内置任何资源站，部署后需要你自行在后台配置。
 - 仅建议个人自部署使用，不建议做公开服务。
-- 当前代码已经精简为点播主线：保留搜索、详情、播放、收藏、历史、后台配置；已移除直播链路与 Redis/Upstash/Kvrocks 多存储分支。
 
 ## 当前技术栈
 
@@ -93,6 +92,8 @@ pnpm dev
 | `PASSWORD` | 站长密码 |
 | `DATABASE_URL` | PostgreSQL 连接串 |
 
+项目启动时会自动执行 PostgreSQL schema 初始化和内置 migration。
+
 ### 推荐
 
 | 变量 | 说明 |
@@ -109,12 +110,11 @@ pnpm dev
 ```env
 USERNAME=admin
 PASSWORD=your_secure_password
-DATABASE_URL=postgresql://mytv:mytv_password@postgres:5432/mytv
+DATABASE_URL=postgresql://mytv:mytv_password@postgres:5432/mytv?sslmode=require
 DATABASE_SSL=false
 NEXT_PUBLIC_SITE_NAME=MyTV
 ```
 
-如果你使用云 PostgreSQL 且连接串带 `?sslmode=require`，当前代码已经兼容这类场景。
 
 ## 部署方式
 
@@ -181,9 +181,9 @@ GitHub 仓库需要配置这 3 个 Secrets：
 | `pnpm format` | Prettier 格式化 |
 | `pnpm sync:version` | 根据 tag / 环境变量同步 `src/lib/version.ts` |
 
-## 后台配置
+## 资源站配置
 
-部署后登录 `/admin`，在“配置文件”中填写资源站 JSON。最小示例：
+部署后登录 `/admin`，在“配置文件”中填写资源站 JSON。当前最小可用示例：
 
 ```json
 {
@@ -196,29 +196,6 @@ GitHub 仓库需要配置这 3 个 Secrets：
   }
 }
 ```
-
-## 当前目录结构
-
-```text
-src/
-  app/
-    admin/
-    play/
-  components/
-  features/
-    admin/
-    play/
-    user-menu/
-  lib/
-scripts/
-  dev-docker.sh
-  sync-version.js
-deploy/
-  docker-compose.dev.yml
-  start-standalone.js
-```
-
-这一轮重构后，页面主入口已经比较薄，复杂逻辑主要下沉在 `src/features/*`。
 
 ## 致谢
 

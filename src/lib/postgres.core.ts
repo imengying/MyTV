@@ -3,6 +3,7 @@
 import { Pool, type PoolConfig } from 'pg';
 
 import { hashPassword, isHashed } from './password';
+import { runPostgresMigrations } from './postgres.migrations';
 
 export const SEARCH_HISTORY_LIMIT = 20;
 
@@ -162,6 +163,7 @@ export async function ensureOwnerUser(pool: Pool): Promise<void> {
 
 async function bootstrapPool(pool: Pool): Promise<void> {
   await pool.query(SCHEMA_SQL);
+  await runPostgresMigrations(pool);
   await ensureOwnerUser(pool);
 }
 

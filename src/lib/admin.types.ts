@@ -1,9 +1,17 @@
+export interface ConfigSubscription {
+  URL: string;
+  AutoUpdate: boolean;
+  LastCheck: string;
+}
+
+export const DEFAULT_CONFIG_SUBSCRIPTION: ConfigSubscription = {
+  URL: '',
+  AutoUpdate: false,
+  LastCheck: '',
+};
+
 export interface AdminConfig {
-  ConfigSubscribtion: {
-    URL: string;
-    AutoUpdate: boolean;
-    LastCheck: string;
-  };
+  ConfigSubscription: ConfigSubscription;
   ConfigFile: string;
   SiteConfig: {
     SiteName: string;
@@ -35,13 +43,6 @@ export interface AdminConfig {
     name: string;
     api: string;
     detail?: string;
-    from: 'config' | 'custom';
-    disabled?: boolean;
-  }[];
-  CustomCategories: {
-    name?: string;
-    type: 'movie' | 'tv';
-    query: string;
     from: 'config' | 'custom';
     disabled?: boolean;
   }[];

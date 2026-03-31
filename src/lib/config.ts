@@ -54,7 +54,7 @@ export async function resetConfig() {
 
   const adminConfig = await createInitialConfig(
     originConfig?.ConfigFile || '',
-    originConfig?.ConfigSubscribtion,
+    originConfig?.ConfigSubscription,
   );
   cachedConfig = adminConfig;
   await db.saveAdminConfig(adminConfig);

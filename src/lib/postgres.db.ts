@@ -104,6 +104,10 @@ export class PostgresStorage implements IStorage {
     );
   }
 
+  async getStoredPassword(userName: string): Promise<string | null> {
+    return postgresUsers.getStoredPassword(this.query.bind(this), userName);
+  }
+
   async deleteUser(userName: string): Promise<void> {
     return postgresUsers.deleteUser(this.query.bind(this), userName);
   }

@@ -77,6 +77,22 @@ export async function changePassword(
   );
 }
 
+export async function getStoredPassword(
+  query: PostgresQuery,
+  userName: string,
+): Promise<string | null> {
+  const result = await query<{ password_hash: string }>(
+    `
+      SELECT password_hash
+      FROM mytv_users
+      WHERE username = $1
+    `,
+    [userName],
+  );
+
+  return result.rows[0]?.password_hash || null;
+}
+
 export async function deleteUser(
   query: PostgresQuery,
   userName: string,

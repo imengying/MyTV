@@ -45,12 +45,12 @@ async function refreshConfig() {
   let config = await getConfig();
   if (
     config &&
-    config.ConfigSubscribtion &&
-    config.ConfigSubscribtion.URL &&
-    config.ConfigSubscribtion.AutoUpdate
+    config.ConfigSubscription &&
+    config.ConfigSubscription.URL &&
+    config.ConfigSubscription.AutoUpdate
   ) {
     try {
-      const response = await fetch(config.ConfigSubscribtion.URL);
+      const response = await fetch(config.ConfigSubscription.URL);
 
       if (!response.ok) {
         throw new Error(`请求失败: ${response.status} ${response.statusText}`);
@@ -75,7 +75,7 @@ async function refreshConfig() {
         throw new Error('配置文件格式错误，请检查 JSON 语法');
       }
       config.ConfigFile = decodedContent;
-      config.ConfigSubscribtion.LastCheck = new Date().toISOString();
+      config.ConfigSubscription.LastCheck = new Date().toISOString();
       config = refineConfig(config);
       await db.saveAdminConfig(config);
     } catch (e) {

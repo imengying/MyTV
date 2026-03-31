@@ -31,6 +31,13 @@ export async function changePassword(
   await storage.changePassword(userName, newPassword);
 }
 
+export async function getStoredPassword(
+  storage: IStorage,
+  userName: string,
+): Promise<string | null> {
+  return storage.getStoredPassword(userName);
+}
+
 export async function deleteUser(
   storage: IStorage,
   userName: string,

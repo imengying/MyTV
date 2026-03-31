@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { DEFAULT_CONFIG_SUBSCRIPTION } from '@/lib/admin.types';
 import { getConfig, refineConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
@@ -49,22 +50,16 @@ export async function POST(request: NextRequest) {
     }
 
     adminConfig.ConfigFile = configFile;
-    if (!adminConfig.ConfigSubscribtion) {
-      adminConfig.ConfigSubscribtion = {
-        URL: '',
-        AutoUpdate: false,
-        LastCheck: '',
-      };
-    }
+    adminConfig.ConfigSubscription ||= { ...DEFAULT_CONFIG_SUBSCRIPTION };
 
     // 更新订阅配置
     if (subscriptionUrl !== undefined) {
-      adminConfig.ConfigSubscribtion.URL = subscriptionUrl;
+      adminConfig.ConfigSubscription.URL = subscriptionUrl;
     }
     if (autoUpdate !== undefined) {
-      adminConfig.ConfigSubscribtion.AutoUpdate = autoUpdate;
+      adminConfig.ConfigSubscription.AutoUpdate = autoUpdate;
     }
-    adminConfig.ConfigSubscribtion.LastCheck = lastCheckTime || '';
+    adminConfig.ConfigSubscription.LastCheck = lastCheckTime || '';
 
     adminConfig = refineConfig(adminConfig);
     // 更新配置文件

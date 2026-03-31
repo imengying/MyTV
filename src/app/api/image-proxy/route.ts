@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-// 兼容外部客户端的图片代理接口
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const imageUrl = searchParams.get('url');

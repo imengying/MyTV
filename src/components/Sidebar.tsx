@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Clover, Film, Home, Menu, Search, Star, Tv } from 'lucide-react';
+import { Cat, Clapperboard, Clover, Film, Home, Menu, Search, Tv } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -141,29 +141,21 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       href: '/douban?type=tv',
     },
     {
+      icon: Cat,
+      label: '动漫',
+      href: '/douban?type=anime',
+    },
+    {
+      icon: Clapperboard,
+      label: '短剧',
+      href: '/douban?type=short',
+    },
+    {
       icon: Clover,
       label: '综艺',
       href: '/douban?type=show',
     },
   ]);
-
-  useEffect(() => {
-    const runtimeConfig = (window as any).RUNTIME_CONFIG;
-    if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
-      setMenuItems((prevItems) => {
-        if (prevItems.some((item) => item.href === '/douban?type=custom'))
-          return prevItems;
-        return [
-          ...prevItems,
-          {
-            icon: Star,
-            label: '自定义',
-            href: '/douban?type=custom',
-          },
-        ];
-      });
-    }
-  }, []);
 
   return (
     <SidebarContext.Provider value={contextValue}>

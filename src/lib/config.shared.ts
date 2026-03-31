@@ -8,11 +8,6 @@ export interface ApiSite {
 export interface ConfigFileStruct {
   cache_time?: number;
   api_site?: Record<string, Omit<ApiSite, 'key'>>;
-  custom_category?: {
-    name?: string;
-    type: 'movie' | 'tv';
-    query: string;
-  }[];
 }
 
 export const API_CONFIG = {
