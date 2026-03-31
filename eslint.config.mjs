@@ -35,8 +35,6 @@ export default [
       '.git/**',
       '.next/**',
       'node_modules/**',
-      'public/sw.js',
-      'public/workbox-*.js',
     ],
   },
   {

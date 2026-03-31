@@ -1,193 +1,11 @@
-/* eslint-disable no-console */
-
-import { Pool, PoolConfig, QueryResult, QueryResultRow } from 'pg';
+import { Pool, QueryResult, QueryResultRow } from 'pg';
 
 import { AdminConfig } from './admin.types';
-import { hashPassword, isHashed, verifyPassword } from './password';
-import { Favorite, IStorage, PlayRecord, SkipConfig } from './types';
-
-const SEARCH_HISTORY_LIMIT = 20;
-
-type GlobalPostgresState = typeof globalThis & {
-  __mytvPgPool?: Pool;
-  __mytvPgBootstrap?: Promise<void>;
-};
-
-const globalPostgres = globalThis as GlobalPostgresState;
-
-const SCHEMA_SQL = `
-CREATE TABLE IF NOT EXISTS mytv_users (
-  username TEXT PRIMARY KEY,
-  password_hash TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS mytv_admin_configs (
-  config_key TEXT PRIMARY KEY,
-  config JSONB NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS mytv_play_records (
-  username TEXT NOT NULL REFERENCES mytv_users(username) ON DELETE CASCADE,
-  storage_key TEXT NOT NULL,
-  record JSONB NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (username, storage_key)
-);
-
-CREATE INDEX IF NOT EXISTS idx_mytv_play_records_user_updated_at
-  ON mytv_play_records (username, updated_at DESC);
-
-CREATE TABLE IF NOT EXISTS mytv_favorites (
-  username TEXT NOT NULL REFERENCES mytv_users(username) ON DELETE CASCADE,
-  storage_key TEXT NOT NULL,
-  favorite JSONB NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (username, storage_key)
-);
-
-CREATE INDEX IF NOT EXISTS idx_mytv_favorites_user_updated_at
-  ON mytv_favorites (username, updated_at DESC);
-
-CREATE TABLE IF NOT EXISTS mytv_search_history (
-  username TEXT NOT NULL REFERENCES mytv_users(username) ON DELETE CASCADE,
-  keyword TEXT NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (username, keyword)
-);
-
-CREATE INDEX IF NOT EXISTS idx_mytv_search_history_user_updated_at
-  ON mytv_search_history (username, updated_at DESC);
-
-CREATE TABLE IF NOT EXISTS mytv_skip_configs (
-  username TEXT NOT NULL REFERENCES mytv_users(username) ON DELETE CASCADE,
-  source TEXT NOT NULL,
-  item_id TEXT NOT NULL,
-  config JSONB NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (username, source, item_id)
-);
-`;
-
-function shouldUseSsl(connectionString: string): boolean {
-  if (process.env.DATABASE_SSL === 'false') {
-    return false;
-  }
-
-  if (connectionString.includes('sslmode=disable')) {
-    return false;
-  }
-
-  return !/(localhost|127\.0\.0\.1)/.test(connectionString);
-}
-
-function shouldRejectUnauthorized(sslMode: string | null): boolean {
-  if (process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true') {
-    return true;
-  }
-
-  return sslMode === 'verify-ca' || sslMode === 'verify-full';
-}
-
-function buildPoolConfig(connectionString: string): PoolConfig {
-  const defaultPoolMax = 4;
-  const defaultIdleTimeoutMs = process.env.VERCEL ? 5000 : 30000;
-
-  let sanitizedConnectionString = connectionString;
-  let sslMode: string | null = null;
-
-  try {
-    const connectionUrl = new URL(connectionString);
-    sslMode = connectionUrl.searchParams.get('sslmode')?.toLowerCase() || null;
-
-    // node-postgres 会让 connectionString 中的 sslmode 覆盖 ssl 对象。
-    // 这里先移除相关参数，再统一用代码生成兼容自签证书的 ssl 配置。
-    connectionUrl.searchParams.delete('sslmode');
-    connectionUrl.searchParams.delete('sslcert');
-    connectionUrl.searchParams.delete('sslkey');
-    connectionUrl.searchParams.delete('sslrootcert');
-
-    sanitizedConnectionString = connectionUrl.toString();
-  } catch {
-    // 保持原始连接串，继续使用基于字符串的兜底判断。
-  }
-
-  const sslEnabled =
-    sslMode === 'disable'
-      ? false
-      : shouldUseSsl(sanitizedConnectionString);
-
-  return {
-    connectionString: sanitizedConnectionString,
-    max: Number(process.env.DATABASE_POOL_MAX || defaultPoolMax),
-    idleTimeoutMillis: Number(
-      process.env.DATABASE_IDLE_TIMEOUT_MS || defaultIdleTimeoutMs,
-    ),
-    connectionTimeoutMillis: Number(
-      process.env.DATABASE_CONNECT_TIMEOUT_MS || 10000,
-    ),
-    ssl: sslEnabled
-      ? {
-          rejectUnauthorized: shouldRejectUnauthorized(sslMode),
-        }
-      : undefined,
-  };
-}
-
-function getPool(): Pool {
-  if (!globalPostgres.__mytvPgPool) {
-    const connectionString = process.env.DATABASE_URL;
-
-    if (!connectionString) {
-      throw new Error('DATABASE_URL env variable not set');
-    }
-
-    globalPostgres.__mytvPgPool = new Pool(buildPoolConfig(connectionString));
-
-    globalPostgres.__mytvPgPool.on('error', (error: Error) => {
-      console.error('PostgreSQL pool error:', error);
-    });
-  }
-
-  return globalPostgres.__mytvPgPool;
-}
-
-async function ensureOwnerUser(pool: Pool): Promise<void> {
-  if (!process.env.USERNAME || !process.env.PASSWORD) {
-    return;
-  }
-
-  const ownerPassword = isHashed(process.env.PASSWORD)
-    ? process.env.PASSWORD
-    : hashPassword(process.env.PASSWORD);
-
-  await pool.query(
-    `
-      INSERT INTO mytv_users (username, password_hash)
-      VALUES ($1, $2)
-      ON CONFLICT (username)
-      DO UPDATE SET
-        password_hash = EXCLUDED.password_hash,
-        updated_at = NOW()
-    `,
-    [process.env.USERNAME, ownerPassword],
-  );
-}
-
-async function bootstrapPool(pool: Pool): Promise<void> {
-  await pool.query(SCHEMA_SQL);
-  await ensureOwnerUser(pool);
-}
-
-function parseJsonColumn<T>(value: T | string): T {
-  if (typeof value === 'string') {
-    return JSON.parse(value) as T;
-  }
-
-  return value;
-}
+import * as postgresAdminStorage from './postgres.admin-storage';
+import { ensurePoolReady, getPool } from './postgres.core';
+import * as postgresMedia from './postgres.media';
+import * as postgresUsers from './postgres.users';
+import { Favorite, IStorage, PlayRecord } from './types';
 
 export class PostgresStorage implements IStorage {
   private pool?: Pool;
@@ -202,15 +20,7 @@ export class PostgresStorage implements IStorage {
 
   private async ready(): Promise<void> {
     const pool = this.getPoolInstance();
-
-    if (!globalPostgres.__mytvPgBootstrap) {
-      globalPostgres.__mytvPgBootstrap = bootstrapPool(pool).catch((error) => {
-        globalPostgres.__mytvPgBootstrap = undefined;
-        throw error;
-      });
-    }
-
-    await globalPostgres.__mytvPgBootstrap;
+    await ensurePoolReady(pool);
   }
 
   private async query<T extends QueryResultRow = QueryResultRow>(
@@ -225,17 +35,7 @@ export class PostgresStorage implements IStorage {
     userName: string,
     key: string,
   ): Promise<PlayRecord | null> {
-    const result = await this.query<{ record: PlayRecord | string }>(
-      `
-        SELECT record
-        FROM mytv_play_records
-        WHERE username = $1 AND storage_key = $2
-      `,
-      [userName, key],
-    );
-
-    const row = result.rows[0];
-    return row ? parseJsonColumn<PlayRecord>(row.record) : null;
+    return postgresMedia.getPlayRecord(this.query.bind(this), userName, key);
   }
 
   async setPlayRecord(
@@ -243,79 +43,25 @@ export class PostgresStorage implements IStorage {
     key: string,
     record: PlayRecord,
   ): Promise<void> {
-    await this.query(
-      `
-        INSERT INTO mytv_play_records (username, storage_key, record, updated_at)
-        VALUES ($1, $2, $3::jsonb, NOW())
-        ON CONFLICT (username, storage_key)
-        DO UPDATE SET
-          record = EXCLUDED.record,
-          updated_at = NOW()
-      `,
-      [userName, key, JSON.stringify(record)],
-    );
+    return postgresMedia.setPlayRecord(this.query.bind(this), userName, key, record);
   }
 
   async getAllPlayRecords(
     userName: string,
   ): Promise<Record<string, PlayRecord>> {
-    const result = await this.query<{
-      storage_key: string;
-      record: PlayRecord | string;
-    }>(
-      `
-        SELECT storage_key, record
-        FROM mytv_play_records
-        WHERE username = $1
-        ORDER BY updated_at DESC
-      `,
-      [userName],
-    );
-
-    return result.rows.reduce<Record<string, PlayRecord>>(
-      (
-        acc: Record<string, PlayRecord>,
-        row: { storage_key: string; record: PlayRecord | string },
-      ) => {
-        acc[row.storage_key] = parseJsonColumn<PlayRecord>(row.record);
-        return acc;
-      },
-      {},
-    );
+    return postgresMedia.getAllPlayRecords(this.query.bind(this), userName);
   }
 
   async deletePlayRecord(userName: string, key: string): Promise<void> {
-    await this.query(
-      `
-        DELETE FROM mytv_play_records
-        WHERE username = $1 AND storage_key = $2
-      `,
-      [userName, key],
-    );
+    return postgresMedia.deletePlayRecord(this.query.bind(this), userName, key);
   }
 
   async deleteAllPlayRecords(userName: string): Promise<void> {
-    await this.query(
-      `
-        DELETE FROM mytv_play_records
-        WHERE username = $1
-      `,
-      [userName],
-    );
+    return postgresMedia.deleteAllPlayRecords(this.query.bind(this), userName);
   }
 
   async getFavorite(userName: string, key: string): Promise<Favorite | null> {
-    const result = await this.query<{ favorite: Favorite | string }>(
-      `
-        SELECT favorite
-        FROM mytv_favorites
-        WHERE username = $1 AND storage_key = $2
-      `,
-      [userName, key],
-    );
-
-    const row = result.rows[0];
-    return row ? parseJsonColumn<Favorite>(row.favorite) : null;
+    return postgresMedia.getFavorite(this.query.bind(this), userName, key);
   }
 
   async setFavorite(
@@ -323,351 +69,77 @@ export class PostgresStorage implements IStorage {
     key: string,
     favorite: Favorite,
   ): Promise<void> {
-    await this.query(
-      `
-        INSERT INTO mytv_favorites (username, storage_key, favorite, updated_at)
-        VALUES ($1, $2, $3::jsonb, NOW())
-        ON CONFLICT (username, storage_key)
-        DO UPDATE SET
-          favorite = EXCLUDED.favorite,
-          updated_at = NOW()
-      `,
-      [userName, key, JSON.stringify(favorite)],
-    );
+    return postgresMedia.setFavorite(this.query.bind(this), userName, key, favorite);
   }
 
   async getAllFavorites(userName: string): Promise<Record<string, Favorite>> {
-    const result = await this.query<{
-      storage_key: string;
-      favorite: Favorite | string;
-    }>(
-      `
-        SELECT storage_key, favorite
-        FROM mytv_favorites
-        WHERE username = $1
-        ORDER BY updated_at DESC
-      `,
-      [userName],
-    );
-
-    return result.rows.reduce<Record<string, Favorite>>(
-      (
-        acc: Record<string, Favorite>,
-        row: { storage_key: string; favorite: Favorite | string },
-      ) => {
-        acc[row.storage_key] = parseJsonColumn<Favorite>(row.favorite);
-        return acc;
-      },
-      {},
-    );
+    return postgresMedia.getAllFavorites(this.query.bind(this), userName);
   }
 
   async deleteFavorite(userName: string, key: string): Promise<void> {
-    await this.query(
-      `
-        DELETE FROM mytv_favorites
-        WHERE username = $1 AND storage_key = $2
-      `,
-      [userName, key],
-    );
+    return postgresMedia.deleteFavorite(this.query.bind(this), userName, key);
   }
 
   async deleteAllFavorites(userName: string): Promise<void> {
-    await this.query(
-      `
-        DELETE FROM mytv_favorites
-        WHERE username = $1
-      `,
-      [userName],
-    );
+    return postgresMedia.deleteAllFavorites(this.query.bind(this), userName);
   }
 
   async registerUser(userName: string, password: string): Promise<void> {
-    const storedPassword = isHashed(password)
-      ? password
-      : hashPassword(password);
-
-    await this.query(
-      `
-        INSERT INTO mytv_users (username, password_hash)
-        VALUES ($1, $2)
-        ON CONFLICT (username)
-        DO UPDATE SET
-          password_hash = EXCLUDED.password_hash,
-          updated_at = NOW()
-      `,
-      [userName, storedPassword],
-    );
+    return postgresUsers.registerUser(this.query.bind(this), userName, password);
   }
 
   async verifyUser(userName: string, password: string): Promise<boolean> {
-    const result = await this.query<{ password_hash: string }>(
-      `
-        SELECT password_hash
-        FROM mytv_users
-        WHERE username = $1
-      `,
-      [userName],
-    );
-
-    const stored = result.rows[0]?.password_hash;
-    if (!stored) {
-      return false;
-    }
-
-    return verifyPassword(password, stored);
+    return postgresUsers.verifyUser(this.query.bind(this), userName, password);
   }
 
   async checkUserExist(userName: string): Promise<boolean> {
-    const result = await this.query<{ exists: boolean }>(
-      `
-        SELECT EXISTS (
-          SELECT 1
-          FROM mytv_users
-          WHERE username = $1
-        ) AS exists
-      `,
-      [userName],
-    );
-
-    return Boolean(result.rows[0]?.exists);
+    return postgresUsers.checkUserExist(this.query.bind(this), userName);
   }
 
   async changePassword(userName: string, newPassword: string): Promise<void> {
-    const storedPassword = isHashed(newPassword)
-      ? newPassword
-      : hashPassword(newPassword);
-
-    await this.query(
-      `
-        UPDATE mytv_users
-        SET password_hash = $2, updated_at = NOW()
-        WHERE username = $1
-      `,
-      [userName, storedPassword],
+    return postgresUsers.changePassword(
+      this.query.bind(this),
+      userName,
+      newPassword,
     );
-  }
-
-  async getStoredPassword(userName: string): Promise<string | null> {
-    const result = await this.query<{ password_hash: string }>(
-      `
-        SELECT password_hash
-        FROM mytv_users
-        WHERE username = $1
-      `,
-      [userName],
-    );
-
-    return result.rows[0]?.password_hash || null;
   }
 
   async deleteUser(userName: string): Promise<void> {
-    await this.query(
-      `
-        DELETE FROM mytv_users
-        WHERE username = $1
-      `,
-      [userName],
-    );
+    return postgresUsers.deleteUser(this.query.bind(this), userName);
   }
 
   async getSearchHistory(userName: string): Promise<string[]> {
-    const result = await this.query<{ keyword: string }>(
-      `
-        SELECT keyword
-        FROM mytv_search_history
-        WHERE username = $1
-        ORDER BY updated_at DESC
-      `,
-      [userName],
-    );
-
-    return result.rows.map((row: { keyword: string }) => row.keyword);
+    return postgresUsers.getSearchHistory(this.query.bind(this), userName);
   }
 
   async addSearchHistory(userName: string, keyword: string): Promise<void> {
-    await this.query(
-      `
-        INSERT INTO mytv_search_history (username, keyword, updated_at)
-        VALUES ($1, $2, NOW())
-        ON CONFLICT (username, keyword)
-        DO UPDATE SET updated_at = NOW()
-      `,
-      [userName, keyword],
-    );
-
-    await this.query(
-      `
-        DELETE FROM mytv_search_history
-        WHERE username = $1
-          AND keyword NOT IN (
-            SELECT keyword
-            FROM mytv_search_history
-            WHERE username = $1
-            ORDER BY updated_at DESC
-            LIMIT $2
-          )
-      `,
-      [userName, SEARCH_HISTORY_LIMIT],
-    );
+    return postgresUsers.addSearchHistory(this.query.bind(this), userName, keyword);
   }
 
   async deleteSearchHistory(userName: string, keyword?: string): Promise<void> {
-    if (keyword) {
-      await this.query(
-        `
-          DELETE FROM mytv_search_history
-          WHERE username = $1 AND keyword = $2
-        `,
-        [userName, keyword],
-      );
-      return;
-    }
-
-    await this.query(
-      `
-        DELETE FROM mytv_search_history
-        WHERE username = $1
-      `,
-      [userName],
+    return postgresUsers.deleteSearchHistory(
+      this.query.bind(this),
+      userName,
+      keyword,
     );
   }
 
   async getAllUsers(): Promise<string[]> {
-    const result = await this.query<{ username: string }>(
-      `
-        SELECT username
-        FROM mytv_users
-        ORDER BY username ASC
-      `,
-    );
-
-    return result.rows.map((row: { username: string }) => row.username);
+    return postgresUsers.getAllUsers(this.query.bind(this));
   }
 
   async getAdminConfig(): Promise<AdminConfig | null> {
-    const result = await this.query<{ config: AdminConfig | string }>(
-      `
-        SELECT config
-        FROM mytv_admin_configs
-        WHERE config_key = 'default'
-      `,
-    );
-
-    const row = result.rows[0];
-    return row ? parseJsonColumn<AdminConfig>(row.config) : null;
+    return postgresAdminStorage.getAdminConfig(this.query.bind(this));
   }
 
   async setAdminConfig(config: AdminConfig): Promise<void> {
-    await this.query(
-      `
-        INSERT INTO mytv_admin_configs (config_key, config, updated_at)
-        VALUES ('default', $1::jsonb, NOW())
-        ON CONFLICT (config_key)
-        DO UPDATE SET
-          config = EXCLUDED.config,
-          updated_at = NOW()
-      `,
-      [JSON.stringify(config)],
-    );
-  }
-
-  async getSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<SkipConfig | null> {
-    const result = await this.query<{ config: SkipConfig | string }>(
-      `
-        SELECT config
-        FROM mytv_skip_configs
-        WHERE username = $1 AND source = $2 AND item_id = $3
-      `,
-      [userName, source, id],
-    );
-
-    const row = result.rows[0];
-    return row ? parseJsonColumn<SkipConfig>(row.config) : null;
-  }
-
-  async setSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: SkipConfig,
-  ): Promise<void> {
-    await this.query(
-      `
-        INSERT INTO mytv_skip_configs (username, source, item_id, config, updated_at)
-        VALUES ($1, $2, $3, $4::jsonb, NOW())
-        ON CONFLICT (username, source, item_id)
-        DO UPDATE SET
-          config = EXCLUDED.config,
-          updated_at = NOW()
-      `,
-      [userName, source, id, JSON.stringify(config)],
-    );
-  }
-
-  async deleteSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<void> {
-    await this.query(
-      `
-        DELETE FROM mytv_skip_configs
-        WHERE username = $1 AND source = $2 AND item_id = $3
-      `,
-      [userName, source, id],
-    );
-  }
-
-  async getAllSkipConfigs(
-    userName: string,
-  ): Promise<{ [key: string]: SkipConfig }> {
-    const result = await this.query<{
-      source: string;
-      item_id: string;
-      config: SkipConfig | string;
-    }>(
-      `
-        SELECT source, item_id, config
-        FROM mytv_skip_configs
-        WHERE username = $1
-        ORDER BY updated_at DESC
-      `,
-      [userName],
-    );
-
-    return result.rows.reduce<Record<string, SkipConfig>>(
-      (
-        acc: Record<string, SkipConfig>,
-        row: { source: string; item_id: string; config: SkipConfig | string },
-      ) => {
-        acc[`${row.source}+${row.item_id}`] = parseJsonColumn<SkipConfig>(
-          row.config,
-        );
-        return acc;
-      },
-      {},
-    );
+    return postgresAdminStorage.setAdminConfig(this.query.bind(this), config);
   }
 
   async clearAllData(): Promise<void> {
-    await this.query(
-      `
-        TRUNCATE TABLE
-          mytv_admin_configs,
-          mytv_skip_configs,
-          mytv_search_history,
-          mytv_favorites,
-          mytv_play_records,
-          mytv_users
-        RESTART IDENTITY CASCADE
-      `,
+    return postgresAdminStorage.clearAllData(
+      this.query.bind(this),
+      this.getPoolInstance(),
     );
-
-    await ensureOwnerUser(this.getPoolInstance());
   }
 }

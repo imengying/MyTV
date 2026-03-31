@@ -26,7 +26,6 @@ export interface Favorite {
   origin?: 'vod';
 }
 
-// 存储接口
 export interface IStorage {
   // 播放记录相关
   getPlayRecord(userName: string, key: string): Promise<PlayRecord | null>;
@@ -53,8 +52,6 @@ export interface IStorage {
   checkUserExist(userName: string): Promise<boolean>;
   // 修改用户密码
   changePassword(userName: string, newPassword: string): Promise<void>;
-  // 获取已存储的密码值（用于备份/恢复）
-  getStoredPassword(userName: string): Promise<string | null>;
   // 删除用户（包括密码、搜索历史、播放记录、收藏夹）
   deleteUser(userName: string): Promise<void>;
 
@@ -69,21 +66,6 @@ export interface IStorage {
   // 管理员配置相关
   getAdminConfig(): Promise<AdminConfig | null>;
   setAdminConfig(config: AdminConfig): Promise<void>;
-
-  // 跳过片头片尾配置相关
-  getSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<SkipConfig | null>;
-  setSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: SkipConfig,
-  ): Promise<void>;
-  deleteSkipConfig(userName: string, source: string, id: string): Promise<void>;
-  getAllSkipConfigs(userName: string): Promise<{ [key: string]: SkipConfig }>;
 
   // 数据清理相关
   clearAllData(): Promise<void>;
@@ -118,11 +100,4 @@ export interface DoubanResult {
   code: number;
   message: string;
   list: DoubanItem[];
-}
-
-// 跳过片头片尾配置数据结构
-export interface SkipConfig {
-  enable: boolean; // 是否启用跳过片头片尾
-  intro_time: number; // 片头时间（秒）
-  outro_time: number; // 片尾时间（秒）
 }

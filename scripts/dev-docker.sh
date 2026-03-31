@@ -1,10 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # 本地构建并启动 Docker 镜像 + PostgreSQL
 # 用法: ./scripts/dev-docker.sh [up|down|rebuild|logs]
 
-set -e
+set -euo pipefail
 
-COMPOSE_FILE="docker-compose.dev.yml"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+COMPOSE_FILE="$PROJECT_ROOT/deploy/docker-compose.dev.yml"
 
 case "${1:-up}" in
   up)

@@ -50,7 +50,6 @@ export interface VideoCardProps {
   onDelete?: () => void;
   rate?: string;
   type?: string;
-  isBangumi?: boolean;
   isAggregate?: boolean;
 }
 
@@ -79,7 +78,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       onDelete,
       rate,
       type = '',
-      isBangumi = false,
       isAggregate = false,
     }: VideoCardProps,
     ref,
@@ -502,12 +500,10 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       if (config.showDoubanLink && actualDoubanId && actualDoubanId !== 0) {
         actions.push({
           id: 'douban',
-          label: isBangumi ? 'Bangumi 详情' : '豆瓣详情',
+          label: '豆瓣详情',
           icon: <Link size={20} />,
           onClick: () => {
-            const url = isBangumi
-              ? `https://bgm.tv/subject/${actualDoubanId.toString()}`
-              : `https://movie.douban.com/subject/${actualDoubanId.toString()}`;
+            const url = `https://movie.douban.com/subject/${actualDoubanId.toString()}`;
             window.open(url, '_blank', 'noopener,noreferrer');
           },
           color: 'default' as const,
@@ -523,7 +519,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       favorited,
       searchFavorited,
       actualDoubanId,
-      isBangumi,
       isAggregate,
       dynamicSourceNames,
       handleClick,
@@ -812,11 +807,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               actualDoubanId &&
               actualDoubanId !== 0 && (
                 <a
-                  href={
-                    isBangumi
-                      ? `https://bgm.tv/subject/${actualDoubanId.toString()}`
-                      : `https://movie.douban.com/subject/${actualDoubanId.toString()}`
-                  }
+                  href={`https://movie.douban.com/subject/${actualDoubanId.toString()}`}
                   target='_blank'
                   rel='noopener noreferrer'
                   onClick={(e) => e.stopPropagation()}

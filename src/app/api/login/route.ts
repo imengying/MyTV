@@ -77,8 +77,8 @@ export async function POST(req: NextRequest) {
       response.cookies.set('auth', cookieValue, {
         path: '/',
         expires,
-        sameSite: 'lax', // 改为 lax 以支持 PWA
-        httpOnly: false, // PWA 需要客户端可访问
+        sameSite: 'lax',
+        httpOnly: false,
         secure: false, // 根据协议自动设置
       });
 
@@ -115,8 +115,8 @@ export async function POST(req: NextRequest) {
       response.cookies.set('auth', cookieValue, {
         path: '/',
         expires,
-        sameSite: 'lax', // 改为 lax 以支持 PWA
-        httpOnly: false, // PWA 需要客户端可访问
+        sameSite: 'lax',
+        httpOnly: false,
         secure: false, // 根据协议自动设置
       });
 

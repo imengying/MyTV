@@ -4,302 +4,233 @@
   <img src="public/logo.svg" alt="MyTV Logo" width="120">
 </div>
 
-> 🎬 **MyTV** 是一个开箱即用的影视聚合播放器。它基于 **Next.js 16** + **React 19** + **Tailwind&nbsp;CSS 4** + **TypeScript 5** 构建，支持多资源搜索、在线播放、收藏同步、播放记录和 PostgreSQL 云端存储，适合作为自部署的点播站点底座。
+> 一个自部署的点播聚合播放器底座。当前版本基于 **Next.js 16 + React 19 + Tailwind CSS 4 + PostgreSQL**，适合做个人使用的影视搜索、在线播放、收藏与播放记录同步站点。
 
 <div align="center">
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
 ![React](https://img.shields.io/badge/React-19-149eca?logo=react)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38bdf8?logo=tailwindcss)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript)
-![License](https://img.shields.io/badge/License-MIT-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)
 ![Docker Ready](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 </div>
 
----
+## 项目定位
 
-## ✨ 功能特性
+- 空壳项目：默认不内置任何资源站，部署后需要你自行在后台配置。
+- 仅建议个人自部署使用，不建议做公开服务。
+- 当前代码已经精简为点播主线：保留搜索、详情、播放、收藏、历史、后台配置；已移除直播链路与 Redis/Upstash/Kvrocks 多存储分支。
 
-- 🔍 **多源聚合搜索**：一次搜索立刻返回全源结果。
-- 📄 **丰富详情页**：支持剧集列表、演员、年份、简介等完整信息展示。
-- ▶️ **流畅在线播放**：集成 HLS.js & ArtPlayer。
-- ❤️ **收藏 + 继续观看**：支持 PostgreSQL 持久化存储，多端同步进度。
-- 📱 **PWA**：离线缓存、安装到桌面/主屏，移动端原生体验。
-- 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
-- 👿 **智能去广告**：自动跳过视频中的切片广告（实验性）。
+## 当前技术栈
 
-### 注意：部署后项目为空壳项目，无内置播放源，需要自行收集与配置
+- `Next.js 16`
+- `React 19`
+- `Tailwind CSS 4`
+- `TypeScript 5`
+- `PostgreSQL`
+- `ArtPlayer + Hls.js`
+- `Vercel` / `Docker`
 
-<details>
-  <summary>点击查看项目截图</summary>
-  <img src="public/screenshot1.png" alt="项目截图" style="max-width:600px">
-  <img src="public/screenshot2.png" alt="项目截图" style="max-width:600px">
-  <img src="public/screenshot3.png" alt="项目截图" style="max-width:600px">
-</details>
+## 核心能力
 
-### 请不要在 B站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
+- 多资源站聚合搜索，兼容苹果 CMS V10 风格接口。
+- PostgreSQL 持久化收藏、播放记录和后台配置。
+- ArtPlayer + HLS.js 在线播放，保留播放速度与基础 m3u8 去广告过滤。
+- 支持 Docker 本地开发，也支持 Vercel + 外部 PostgreSQL 部署。
+- Git tag 驱动版本与生产发布。
 
-## 🗺 目录
+## 环境要求
 
-- [技术栈](#技术栈)
-- [部署](#部署)
-  - [Vercel 部署](#vercel-部署推荐-postgresql)
-  - [Docker 部署](#docker-部署)
-- [配置文件](#配置文件)
-- [订阅](#订阅)
-- [自动更新](#自动更新)
-- [环境变量](#环境变量)
-- [客户端](#客户端)
-- [AndroidTV 使用](#AndroidTV-使用)
-- [Roadmap](#roadmap)
-- [安全与隐私提醒](#安全与隐私提醒)
-- [License](#license)
-- [致谢](#致谢)
+- `Node.js 24`
+- `pnpm 10`
+- `PostgreSQL 16+`
 
-## 技术栈
+## 快速开始
 
-| 分类      | 主要依赖                                                                                              |
-| --------- | ----------------------------------------------------------------------------------------------------- |
-| 前端框架  | [Next.js 16](https://nextjs.org/) · App Router                                                        |
-| UI & 样式 | [Tailwind&nbsp;CSS 4](https://tailwindcss.com/)                                                       |
-| 语言      | TypeScript 5                                                                                          |
-| 运行环境  | Node.js 24 · pnpm 10                                                                                  |
-| 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
-| 代码质量  | ESLint · Prettier · Jest                                                                              |
-| 部署      | Docker · Vercel                                                                                       |
-
-## 部署
-
-本项目支持两种部署方式：
-
-- **Docker**：适合 VPS、NAS、面板或本地服务器，推荐配合 PostgreSQL 容器使用。
-- **Vercel**：适合快速上线，推荐搭配外部 PostgreSQL 服务使用。
-
-### Tag 发布到 Vercel
-
-如果你希望只有在打 Git tag 时才推送到 Vercel，可以使用仓库内置的 tag 部署工作流：
-
-1. 在 Vercel 项目中关闭 Git 自动部署。
-   当前仓库的 `vercel.json` 已将 `git.deploymentEnabled` 设为 `false`。
-2. 在 GitHub 仓库 Secrets 中配置以下 3 个值：
-   - `VERCEL_TOKEN`
-   - `VERCEL_ORG_ID`
-   - `VERCEL_PROJECT_ID`
-3. 推送普通提交时只会运行 CI，不会部署到 Vercel。
-4. 只有推送形如 `v1.2.3` 的 tag 时，才会触发 `.github/workflows/vercel.yml`，并由 Vercel 在生产环境中完成构建与部署。
-
-示例：
+### 本地开发
 
 ```bash
-git tag v100.1.3
-git push origin v100.1.3
+pnpm install
+pnpm dev
 ```
 
-项目版本会优先跟随 git tag，并同步到 `src/lib/version.ts`。
+默认开发脚本会在启动前自动执行：
 
-### Vercel 部署（推荐 PostgreSQL）
+- `pnpm sync:version`
 
-1. Fork 本仓库到你自己的 GitHub 账号。
-2. 准备一个外部 PostgreSQL 数据库，推荐使用 Neon、Supabase 或其他兼容服务。
-3. 在 Vercel 中导入你的仓库并创建 `Next.js` 项目。
-4. 配置以下最小环境变量：
+### Docker 本地调试
+
+项目内置了开发用 `deploy/docker-compose.dev.yml` 和辅助脚本：
+
+```bash
+./scripts/dev-docker.sh up
+```
+
+常用命令：
+
+```bash
+./scripts/dev-docker.sh up
+./scripts/dev-docker.sh logs
+./scripts/dev-docker.sh down
+./scripts/dev-docker.sh rebuild
+```
+
+默认开发容器地址：
+
+- 应用：`http://localhost:3000`
+- PostgreSQL：`localhost:5432`
+- 默认账号：`admin / admin123`
+
+## 环境变量
+
+### 必填
+
+| 变量 | 说明 |
+| --- | --- |
+| `USERNAME` | 站长用户名 |
+| `PASSWORD` | 站长密码 |
+| `DATABASE_URL` | PostgreSQL 连接串 |
+
+### 推荐
+
+| 变量 | 说明 |
+| --- | --- |
+| `DATABASE_SSL` | 是否启用 SSL，云数据库通常填 `true` |
+| `DATABASE_POOL_MAX` | 连接池大小，Vercel 建议从 `1-4` 开始 |
+| `DATABASE_IDLE_TIMEOUT_MS` | 空闲连接超时 |
+| `DATABASE_CONNECT_TIMEOUT_MS` | 建连超时 |
+| `NEXT_PUBLIC_SITE_NAME` | 站点名，默认 `MyTV` |
+| `SITE_BASE` | 完整站点地址，建议在生产环境填写 |
+
+示例：
 
 ```env
 USERNAME=admin
 PASSWORD=your_secure_password
-SITE_BASE=https://your-project.vercel.app
-DATABASE_URL=postgresql://user:password@host:5432/mytv?sslmode=require
-DATABASE_SSL=true
-DATABASE_POOL_MAX=4
+DATABASE_URL=postgresql://mytv:mytv_password@postgres:5432/mytv
+DATABASE_SSL=false
+NEXT_PUBLIC_SITE_NAME=MyTV
 ```
 
-5. 部署完成后访问 `/login` 登录。
-6. 登录后进入 `/admin` 添加点播源配置。
+如果你使用云 PostgreSQL 且连接串带 `?sslmode=require`，当前代码已经兼容这类场景。
 
-说明：
+## 部署方式
 
-- Vercel 部署推荐使用托管 PostgreSQL，当前版本仅支持 PostgreSQL 作为持久化存储。
-- 项目内置了 `vercel.json`，会自动注册每日一次的 `/api/cron` 定时任务。
-- 如果后续绑定了自定义域名，请同步更新 `SITE_BASE`。
+### Docker
 
-### Docker 部署
+适合 VPS / NAS / 本地长期运行。
 
-```yml
-services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: mytv-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_DB=mytv
-      - POSTGRES_USER=mytv
-      - POSTGRES_PASSWORD=mytv_password
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U mytv -d mytv']
-      interval: 5s
-      timeout: 3s
-      retries: 5
-  mytv-app:
-    build: .
-    container_name: mytv-app
-    restart: on-failure
-    ports:
-      - '3000:3000'
-    environment:
-      - USERNAME=admin
-      - PASSWORD=admin_password
-      - DATABASE_URL=postgresql://mytv:mytv_password@postgres:5432/mytv
-      - DATABASE_SSL=false
-    depends_on:
-      postgres:
-        condition: service_healthy
-volumes:
-  postgres-data:
+```bash
+docker compose -f deploy/docker-compose.dev.yml up -d --build
 ```
 
-## 配置文件
+运行时镜像会通过 [start-standalone.js](/home/mengying/文档/code/MyTV/deploy/start-standalone.js) 启动 Next standalone 服务，并定时请求 `/api/cron`。
 
-完成部署后为空壳应用，无播放源，需要站长在管理后台的配置文件设置中填写配置文件（后续会支持订阅）
+### Vercel
 
-配置文件示例如下：
+适合快速上线，但需要自备外部 PostgreSQL。
+
+基本流程：
+
+1. Fork 当前仓库。
+2. 导入 Vercel 项目。
+3. 配置 `USERNAME`、`PASSWORD`、`DATABASE_URL`，云数据库通常再加 `DATABASE_SSL=true`。
+4. 如果需要自定义域名，建议同步设置 `SITE_BASE`。
+
+当前仓库已关闭 Vercel 的 Git 自动部署，改为由 GitHub Actions 在 tag 时触发生产部署。
+
+## 发布流程
+
+### CI
+
+- 工作流文件：`.github/workflows/ci.yml`
+- 触发时机：普通 `push`
+- 行为：启动临时 PostgreSQL 后执行
+  - `pnpm typecheck`
+  - `pnpm build`
+
+### Vercel 生产发布
+
+- 工作流文件：`.github/workflows/vercel.yml`
+- 触发时机：`push` 一个形如 `v*` 的 tag
+- 行为：由 Vercel 自己拉取生产环境并执行部署
+
+发布示例：
+
+```bash
+git tag -a v100.1.3 -m "Release v100.1.3"
+git push origin v100.1.3
+```
+
+GitHub 仓库需要配置这 3 个 Secrets：
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+## 常用脚本
+
+| 命令 | 说明 |
+| --- | --- |
+| `pnpm dev` | 本地开发，自动同步版本 |
+| `pnpm build` | 生产构建，自动同步版本 |
+| `pnpm typecheck` | TypeScript 检查 |
+| `pnpm lint` | ESLint 检查 |
+| `pnpm format` | Prettier 格式化 |
+| `pnpm sync:version` | 根据 tag / 环境变量同步 `src/lib/version.ts` |
+
+## 后台配置
+
+部署后登录 `/admin`，在“配置文件”中填写资源站 JSON。最小示例：
 
 ```json
 {
   "cache_time": 7200,
   "api_site": {
-    "dyttzy": {
-      "api": "http://xxx.com/api.php/provide/vod",
-      "name": "示例资源",
-      "detail": "http://xxx.com"
+    "demo_site": {
+      "api": "http://example.com/api.php/provide/vod",
+      "name": "示例资源站"
     }
-    // ...更多站点
-  },
-  "custom_category": [
-    {
-      "name": "华语",
-      "type": "movie",
-      "query": "华语"
-    }
-  ]
+  }
 }
 ```
 
-- `cache_time`：接口缓存时间（秒）。
-- `api_site`：你可以增删或替换任何资源站，字段说明：
-  - `key`：唯一标识，保持小写字母/数字。
-  - `api`：资源站提供的 `vod` JSON API 根地址。
-  - `name`：在人机界面中展示的名称。
-  - `detail`：（可选）部分无法通过 API 获取剧集详情的站点，需要提供网页详情根 URL，用于爬取。
-- `custom_category`：自定义分类配置，用于在导航中添加个性化的影视分类。以 type + query 作为唯一标识。支持以下字段：
-  - `name`：分类显示名称（可选，如不提供则使用 query 作为显示名）
-  - `type`：分类类型，支持 `movie`（电影）或 `tv`（电视剧）
-  - `query`：搜索关键词，用于在豆瓣 API 中搜索相关内容
+## 当前目录结构
 
-custom_category 支持的自定义分类已知如下：
+```text
+src/
+  app/
+    admin/
+    play/
+  components/
+  features/
+    admin/
+    play/
+    user-menu/
+  lib/
+scripts/
+  dev-docker.sh
+  sync-version.js
+deploy/
+  docker-compose.dev.yml
+  start-standalone.js
+```
 
-- movie：热门、最新、经典、豆瓣高分、冷门佳片、华语、欧美、韩国、日本、动作、喜剧、爱情、科幻、悬疑、恐怖、治愈
-- tv：热门、美剧、英剧、韩剧、日剧、国产剧、港剧、日本动画、综艺、纪录片
-
-也可输入如 "哈利波特" 效果等同于豆瓣搜索
-
-MyTV 支持标准的苹果 CMS V10 API 格式。
-
-## 订阅
-
-将完整的配置文件 base58 编码后提供 http 服务即为订阅链接，可在 MyTV 后台/Helios 中使用。
-
-## 自动更新
-
-可借助 [watchtower](https://github.com/containrrr/watchtower) 自动更新镜像容器
-
-dockge/komodo 等 docker compose UI 也有自动更新功能
-
-## 环境变量
-
-| 变量                                | 说明                     | 可选值                   | 默认值                                                                                                                     |
-| ----------------------------------- | ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| USERNAME                            | 站长账号                 | 任意字符串               | 无默认，必填字段                                                                                                           |
-| PASSWORD                            | 站长密码                 | 任意字符串               | 无默认，必填字段                                                                                                           |
-| SITE_BASE                           | 站点 url                 | 形如 https://example.com | 空                                                                                                                         |
-| NEXT_PUBLIC_SITE_NAME               | 站点名称                 | 任意字符串               | MyTV                                                                                                                       |
-| ANNOUNCEMENT                        | 站点公告                 | 任意字符串               | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
-| DATABASE_URL                        | PostgreSQL 连接字符串    | postgresql://...         | 无默认，必填字段                                                                                                           |
-| DATABASE_SSL                        | 是否启用 PostgreSQL SSL  | true/false               | 自动判断（本地默认 false，远程默认 true）                                                                                  |
-| DATABASE_SSL_REJECT_UNAUTHORIZED    | 是否严格校验证书链       | true/false               | false                                                                                                                      |
-| DATABASE_POOL_MAX                   | 连接池最大连接数         | 正整数                   | 默认 4                                                                                                                     |
-| DATABASE_IDLE_TIMEOUT_MS            | 空闲连接回收时间         | 毫秒                     | Vercel 默认 5000，其他环境默认 30000                                                                                       |
-| DATABASE_CONNECT_TIMEOUT_MS         | 连接超时时间             | 毫秒                     | 10000                                                                                                                      |
-| NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数 | 1-50                     | 5                                                                                                                          |
-| NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式       | 见下方                   | direct                                                                                                                     |
-| NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL   | url prefix               | (空)                                                                                                                       |
-| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE | 豆瓣图片代理类型         | 见下方                   | direct                                                                                                                     |
-| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY      | 自定义豆瓣图片代理 URL   | url prefix               | (空)                                                                                                                       |
-| NEXT_PUBLIC_DISABLE_YELLOW_FILTER   | 关闭色情内容过滤         | true/false               | false                                                                                                                      |
-| NEXT_PUBLIC_FLUID_SEARCH            | 是否开启搜索接口流式输出 | true/ false              | true                                                                                                                       |
-| NEXT_PUBLIC_PROJECT_REPO_URL        | 项目仓库地址（可选）     | URL                      | 空                                                                                                                         |
-| NEXT_PUBLIC_VERSION_CHECK_URL       | 版本检查地址（可选）     | URL                      | 空                                                                                                                         |
-| NEXT_PUBLIC_CHANGELOG_URL           | 远程更新日志地址（可选） | URL                      | 空                                                                                                                         |
-
-NEXT_PUBLIC_DOUBAN_PROXY_TYPE 选项解释：
-
-- direct: 由服务器直接请求豆瓣源站
-- cors-proxy-zwei: 浏览器向 cors proxy 请求豆瓣数据，该 cors proxy 由 [Zwei](https://github.com/bestzwei) 搭建
-- cmliussss-cdn-tencent: 浏览器向豆瓣 CDN 请求数据，该 CDN 由 [CMLiussss](https://github.com/cmliu) 搭建，并由腾讯云 cdn 提供加速
-- cmliussss-cdn-ali: 浏览器向豆瓣 CDN 请求数据，该 CDN 由 [CMLiussss](https://github.com/cmliu) 搭建，并由阿里云 cdn 提供加速
-- custom: 用户自定义 proxy，由 NEXT_PUBLIC_DOUBAN_PROXY 定义
-
-NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
-
-- direct：由浏览器直接请求豆瓣分配的默认图片域名
-- server：由服务器代理请求豆瓣分配的默认图片域名
-- img3：由浏览器请求豆瓣官方的精品 cdn（阿里云）
-- cmliussss-cdn-tencent：由浏览器请求豆瓣 CDN，该 CDN 由 [CMLiussss](https://github.com/cmliu) 搭建，并由腾讯云 cdn 提供加速
-- cmliussss-cdn-ali：由浏览器请求豆瓣 CDN，该 CDN 由 [CMLiussss](https://github.com/cmliu) 搭建，并由阿里云 cdn 提供加速
-- custom: 用户自定义 proxy，由 NEXT_PUBLIC_DOUBAN_IMAGE_PROXY 定义
-
-## 客户端
-
-v100.0.0 以上版本可配合 [Selene](https://github.com/MoonTechLab/Selene) 使用，移动端体验更加友好，数据完全同步
-
-## AndroidTV 使用
-
-目前该项目可以配合 [OrionTV](https://github.com/zimplexing/OrionTV) 在 Android TV 上使用，可以直接作为 OrionTV 后端
-
-已实现播放记录和网页端同步
-
-## 安全与隐私提醒
-
-### 请设置密码保护并关闭公网注册
-
-为了您的安全和避免潜在的法律风险，我们要求在部署时**强烈建议关闭公网注册**：
-
-### 部署要求
-
-1. **设置环境变量 `PASSWORD`**：为您的实例设置一个强密码
-2. **仅供个人使用**：请勿将您的实例链接公开分享或传播
-3. **遵守当地法律**：请确保您的使用行为符合当地法律法规
-
-### 重要声明
-
-- 本项目仅供学习和个人使用
-- 请勿将部署的实例用于商业用途或公开服务
-- 如因公开分享导致的任何法律问题，用户需自行承担责任
-- 项目开发者不对用户的使用行为承担任何法律责任
-- 本项目不在中国大陆地区提供服务。如有该项目在向中国大陆地区提供服务，属个人行为。在该地区使用所产生的法律风险及责任，属于用户个人行为，与本项目无关，须自行承担全部责任。特此声明
-
-## License
-
-[MIT](LICENSE) © 2025 MyTV & Contributors
+这一轮重构后，页面主入口已经比较薄，复杂逻辑主要下沉在 `src/features/*`。
 
 ## 致谢
 
-- [ts-nextjs-tailwind-starter](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter) — 项目最初基于该脚手架。
-- [LibreTV](https://github.com/LibreSpark/LibreTV) — 由此启发，站在巨人的肩膀上。
-- [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) — 提供强大的网页视频播放器。
-- [HLS.js](https://github.com/video-dev/hls.js) — 实现 HLS 流媒体在浏览器中的播放支持。
-- [Zwei](https://github.com/bestzwei) — 提供获取豆瓣数据的 cors proxy
-- [CMLiussss](https://github.com/cmliu) — 提供豆瓣 CDN 服务
-- 感谢所有提供免费影视接口的站点。
+- 播放器与流媒体支持：
+  [ArtPlayer](https://github.com/zhw2590582/ArtPlayer)
+  [HLS.js](https://github.com/video-dev/hls.js)
+- 豆瓣代理与 CDN 支持：
+  [Zwei](https://github.com/bestzwei)
+  [CMLiussss](https://github.com/cmliu)
+- 灵感来源：
+  [LunaTV](https://github.com/MoonTechLab/LunaTV)
+
+## License
+
+[MIT](LICENSE)

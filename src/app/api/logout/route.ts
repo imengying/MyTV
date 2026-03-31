@@ -9,8 +9,8 @@ export async function POST() {
   response.cookies.set('auth', '', {
     path: '/',
     expires: new Date(0),
-    sameSite: 'lax', // 改为 lax 以支持 PWA
-    httpOnly: false, // PWA 需要客户端可访问
+    sameSite: 'lax',
+    httpOnly: false,
     secure: false, // 根据协议自动设置
   });
 

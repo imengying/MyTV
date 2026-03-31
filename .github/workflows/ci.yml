@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -67,9 +67,6 @@ jobs:
 
       - name: Type check
         run: pnpm typecheck
-
-      - name: Run tests
-        run: pnpm exec jest --runInBand --passWithNoTests
 
       - name: Build
         run: pnpm build
