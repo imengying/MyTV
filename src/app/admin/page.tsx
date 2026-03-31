@@ -170,9 +170,21 @@ const AlertModal = ({
     }
   };
 
+  const getOverlayClass = () => {
+    switch (type) {
+      case 'success':
+        return 'bg-white/35 dark:bg-black/35 backdrop-blur-[2px]';
+      case 'warning':
+        return 'bg-black/35 backdrop-blur-[2px]';
+      case 'error':
+      default:
+        return 'bg-black/50 backdrop-blur-[3px]';
+    }
+  };
+
   return createPortal(
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${getOverlayClass()} ${isVisible ? 'opacity-100' : 'opacity-0'}`}
     >
       <div
         className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()} transition-all duration-200 ${isVisible ? 'scale-100' : 'scale-95'}`}
