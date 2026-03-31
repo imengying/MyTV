@@ -32,8 +32,13 @@ const Logo = () => {
   return (
     <Link
       href='/'
-      className='flex items-center justify-center h-16 select-none hover:opacity-80 transition-opacity duration-200'
+      className='flex items-center justify-center gap-3 h-16 select-none hover:opacity-80 transition-opacity duration-200'
     >
+      <img
+        src='/logo.svg'
+        alt={`${siteName} logo`}
+        className='h-9 w-9 shrink-0'
+      />
       <span className='text-2xl font-bold text-green-600 tracking-tight'>
         {siteName}
       </span>

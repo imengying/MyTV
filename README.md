@@ -1,7 +1,7 @@
 # MyTV
 
 <div align="center">
-  <img src="public/logo.png" alt="MyTV Logo" width="120">
+  <img src="public/logo.svg" alt="MyTV Logo" width="120">
 </div>
 
 > 🎬 **MyTV** 是一个开箱即用的影视聚合播放器。它基于 **Next.js 16** + **React 19** + **Tailwind&nbsp;CSS 4** + **TypeScript 5** 构建，支持多资源搜索、在线播放、收藏同步、播放记录和 PostgreSQL 云端存储，适合作为自部署的点播站点底座。

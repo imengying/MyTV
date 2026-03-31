@@ -94,7 +94,7 @@ function shouldSkipAuth(pathname: string): boolean {
     '/robots.txt',
     '/manifest.json',
     '/icons/',
-    '/logo.png',
+    '/logo.svg',
     '/screenshot.png',
   ];
 
