@@ -1,5 +1,5 @@
-import { type Favorite, type IStorage, type PlayRecord } from './types';
 import { generateStorageKey } from './db.core';
+import { type Favorite, type IStorage, type PlayRecord } from './types';
 
 export async function getPlayRecord(
   storage: IStorage,

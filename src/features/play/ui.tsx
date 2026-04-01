@@ -305,6 +305,7 @@ export const PlayDetailsSection = ({
           <div className='relative bg-gray-300 dark:bg-gray-700 aspect-2/3 flex items-center justify-center rounded-xl overflow-hidden'>
             {videoCover ? (
               <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={processImageUrl(videoCover)}
                   alt={videoTitle}

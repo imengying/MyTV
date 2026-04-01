@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-import { resolveInitialPlaybackSession } from '@/features/play/source-selection';
 import { type PlayBootstrapState } from '@/features/play/play-bootstrap-state';
+import { resolveInitialPlaybackSession } from '@/features/play/source-selection';
 
 interface UsePlayBootstrapInitParams {
   state: PlayBootstrapState;
@@ -36,13 +36,17 @@ export const usePlayBootstrapInit = ({
   initialSearchTitle,
   initialSearchType,
 }: UsePlayBootstrapInitParams) => {
+  const stateRef = useRef(state);
+  const initialSearchTitleRef = useRef(initialSearchTitle);
+  const initialSearchTypeRef = useRef(initialSearchType);
+
   // This bootstrap flow should run once on first mount.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let cancelled = false;
 
     const initAll = async () => {
+      const state = stateRef.current;
       const {
         currentSource,
         currentId,
@@ -71,7 +75,12 @@ export const usePlayBootstrapInit = ({
         setCurrentEpisodeIndex,
       } = state;
 
-      if (!currentSource && !currentId && !videoTitle && !initialSearchTitle) {
+      if (
+        !currentSource &&
+        !currentId &&
+        !videoTitle &&
+        !initialSearchTitleRef.current
+      ) {
         setError('缺少必要参数');
         setLoading(false);
         return;
@@ -101,8 +110,8 @@ export const usePlayBootstrapInit = ({
           currentSource,
           currentId,
           videoTitle,
-          searchTitle: initialSearchTitle,
-          searchType: initialSearchType,
+          searchTitle: initialSearchTitleRef.current,
+          searchType: initialSearchTypeRef.current,
           needPrefer: needPreferRef.current,
           optimizationEnabled,
           currentTitle: videoTitleRef.current,
@@ -129,8 +138,6 @@ export const usePlayBootstrapInit = ({
       setSourceSearchError(sourceSearchError);
       setPrecomputedVideoInfo(precomputedVideoInfo);
       setSourceSearchLoading(false);
-
-      console.log(detailData.source, detailData.id);
 
       setNeedPrefer(false);
       setCurrentSource(detailData.source);

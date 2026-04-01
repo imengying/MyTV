@@ -6,8 +6,8 @@ import { fetchSourceDetail, fetchSourcesData } from '@/features/play/source-fetc
 import { preferBestSource } from '@/features/play/source-scoring';
 import { type SourceVideoInfo } from '@/features/play/source-selection.types';
 
-export type { SourceVideoInfo } from '@/features/play/source-selection.types';
 export { calculateSourceScore, preferBestSource } from '@/features/play/source-scoring';
+export type { SourceVideoInfo } from '@/features/play/source-selection.types';
 
 export const resolveVideoUrl = (
   detailData: SearchResult | null,

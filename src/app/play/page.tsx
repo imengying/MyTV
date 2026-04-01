@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
 
 'use client';
 
@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef } from 'react';
 
 import PageLayout from '@/components/PageLayout';
+
 import {
   cleanupPlayer,
   initializeArtPlayer,
@@ -18,8 +19,8 @@ import {
 import {
   PlayDetailsSection,
   PlayErrorState,
-  PlayPlayerSection,
   PlayLoadingState,
+  PlayPlayerSection,
 } from '@/features/play/ui';
 import { usePlayBootstrap } from '@/features/play/use-play-bootstrap';
 import { usePlaybackSession } from '@/features/play/use-playback-session';
@@ -103,7 +104,6 @@ function PlayPageClient() {
     handleToggleFavorite,
     handleSourceChange,
     handleEpisodeChange,
-    handlePreviousEpisode,
     handleNextEpisode,
     saveCurrentPlayProgress,
   } = usePlaybackSession({

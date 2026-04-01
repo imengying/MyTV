@@ -8,8 +8,19 @@ import {
   ChevronUp,
   X,
 } from 'lucide-react';
-import { createPortal } from 'react-dom';
 import { type ReactNode, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+type AlertModalState = {
+  isOpen: boolean;
+  type: 'success' | 'error' | 'warning';
+  title: string;
+  message?: string;
+  timer?: number;
+  showConfirm?: boolean;
+};
+
+type AlertConfig = Omit<AlertModalState, 'isOpen'>;
 
 export const buttonStyles = {
   primary:
@@ -162,20 +173,13 @@ export const AlertModal = ({
 };
 
 export const useAlertModal = () => {
-  const [alertModal, setAlertModal] = useState<{
-    isOpen: boolean;
-    type: 'success' | 'error' | 'warning';
-    title: string;
-    message?: string;
-    timer?: number;
-    showConfirm?: boolean;
-  }>({
+  const [alertModal, setAlertModal] = useState<AlertModalState>({
     isOpen: false,
     type: 'success',
     title: '',
   });
 
-  const showAlert = (config: Omit<typeof alertModal, 'isOpen'>) => {
+  const showAlert = (config: AlertConfig) => {
     setAlertModal({ ...config, isOpen: true });
   };
 
@@ -188,23 +192,19 @@ export const useAlertModal = () => {
 
 export const showError = (
   message: string,
-  showAlert?: (config: any) => void,
+  showAlert?: (config: AlertConfig) => void,
 ) => {
   if (showAlert) {
     showAlert({ type: 'error', title: '错误', message, showConfirm: true });
-  } else {
-    console.error(message);
   }
 };
 
 export const showSuccess = (
   message: string,
-  showAlert?: (config: any) => void,
+  showAlert?: (config: AlertConfig) => void,
 ) => {
   if (showAlert) {
     showAlert({ type: 'success', title: '成功', message, timer: 2000 });
-  } else {
-    console.log(message);
   }
 };
 
@@ -221,17 +221,17 @@ export const useLoadingState = () => {
 
   const isLoading = (key: string) => loadingStates[key] || false;
 
-  const withLoading = async (
+  async function withLoading<T>(
     key: string,
-    operation: () => Promise<any>,
-  ): Promise<any> => {
+    operation: () => Promise<T>,
+  ): Promise<T> {
     setLoading(key, true);
     try {
       return await operation();
     } finally {
       setLoading(key, false);
     }
-  };
+  }
 
   return { loadingStates, setLoading, isLoading, withLoading };
 };

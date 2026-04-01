@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { CURRENT_VERSION } from '@/lib/version';
+
 import { ChangePasswordPanel } from '@/features/user-menu/change-password-panel';
 import { UserMenuPanel } from '@/features/user-menu/menu-panel';
 import { UserSettingsPanel } from '@/features/user-menu/settings-panel';

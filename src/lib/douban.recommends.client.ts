@@ -1,6 +1,5 @@
 'use client';
 
-import { type DoubanItem, type DoubanResult } from './types';
 import {
   buildProxyAwareRequest,
   type DoubanRecommendApiResponse,
@@ -8,6 +7,7 @@ import {
   fetchWithTimeout,
   getDoubanProxyConfig,
 } from './douban.client.shared';
+import { type DoubanItem, type DoubanResult } from './types';
 
 function normalizeRecommendParam(value?: string) {
   if (!value || value === 'all') return '';
@@ -75,7 +75,6 @@ async function fetchDoubanRecommends(
   useAliCDN = false,
 ): Promise<DoubanResult> {
   const target = buildRecommendTarget(params, useTencentCDN, useAliCDN);
-  console.log(target);
 
   try {
     const response = await fetchWithTimeout(

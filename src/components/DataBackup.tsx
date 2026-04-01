@@ -16,7 +16,6 @@ type NoticeState = {
 
 export default function DataBackup({ onRefreshConfig }: DataBackupProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [notice, setNotice] = useState<NoticeState>(null);
@@ -60,16 +59,14 @@ export default function DataBackup({ onRefreshConfig }: DataBackupProps) {
     }
   };
 
-  const handleImport = async () => {
-    if (!selectedFile) {
-      setNotice({ type: 'error', text: '请先选择备份文件。' });
-      return;
-    }
-
+  const runImport = async (file: File) => {
     const confirmed = window.confirm(
       '导入会覆盖当前站点数据，确定继续吗？',
     );
     if (!confirmed) {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -78,7 +75,7 @@ export default function DataBackup({ onRefreshConfig }: DataBackupProps) {
       setNotice(null);
 
       const formData = new FormData();
-      formData.append('file', selectedFile);
+      formData.append('file', file);
 
       const response = await fetch('/api/admin/backup/import', {
         method: 'POST',
@@ -95,7 +92,6 @@ export default function DataBackup({ onRefreshConfig }: DataBackupProps) {
         text: '备份导入成功，请刷新页面查看最新数据。',
       });
 
-      setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -113,6 +109,23 @@ export default function DataBackup({ onRefreshConfig }: DataBackupProps) {
     }
   };
 
+  const handleImportClick = () => {
+    if (isImporting) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0] || null;
+
+    if (!file) {
+      return;
+    }
+
+    await runImport(file);
+  };
+
   const noticeClassName =
     notice?.type === 'success'
       ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200'
@@ -122,10 +135,6 @@ export default function DataBackup({ onRefreshConfig }: DataBackupProps) {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200'>
-        导出的是明文 JSON 备份文件，方便迁移，但请不要随意外传。
-      </div>
-
       {notice && (
         <div className={`rounded-lg border px-4 py-3 text-sm ${noticeClassName}`}>
           {notice.text}
@@ -157,27 +166,18 @@ export default function DataBackup({ onRefreshConfig }: DataBackupProps) {
           <p className='mb-4 text-sm text-gray-500 dark:text-gray-400'>
             导入会覆盖当前数据，请先自行保留一份备份文件。
           </p>
-          <div className='mb-4 space-y-3'>
-            <input
-              ref={fileInputRef}
-              type='file'
-              accept='application/json,.json'
-              onChange={(event) =>
-                setSelectedFile(event.target.files?.[0] || null)
-              }
-              className='block w-full text-sm text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200 dark:text-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600'
-              disabled={isImporting}
-            />
-            {selectedFile && (
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                已选择：{selectedFile.name}
-              </p>
-            )}
-          </div>
+          <input
+            ref={fileInputRef}
+            type='file'
+            accept='application/json,.json'
+            onChange={handleFileChange}
+            className='hidden'
+            disabled={isImporting}
+          />
           <button
-            onClick={handleImport}
-            disabled={isImporting || !selectedFile}
-            className={`${isImporting || !selectedFile ? buttonStyles.disabled : buttonStyles.primary} inline-flex items-center gap-2`}
+            onClick={handleImportClick}
+            disabled={isImporting}
+            className={`${isImporting ? buttonStyles.disabled : buttonStyles.primary} inline-flex items-center gap-2`}
           >
             <Upload className='h-4 w-4' />
             {isImporting ? '导入中…' : '导入 JSON'}

@@ -3,13 +3,13 @@
 import { db } from '@/lib/db';
 
 import { type AdminConfig } from './admin.types';
+import { API_CONFIG, type ApiSite } from './config.shared';
 import { createInitialConfig } from './config-initialization';
 import {
   configSelfCheck,
   refineConfig,
   resolveAvailableApiSites,
 } from './config-normalization';
-import { API_CONFIG, type ApiSite } from './config.shared';
 
 let cachedConfig: AdminConfig | undefined;
 

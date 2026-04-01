@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console,react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps */
 
 'use client';
 
@@ -6,15 +6,15 @@ import { Database, FileText, Settings, Users, Video } from 'lucide-react';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
+
 import DataBackup from '@/components/DataBackup';
 import PageLayout from '@/components/PageLayout';
+
 import { ResetConfigModal } from '@/features/admin/reset-config-modal';
 import {
   ConfigFileComponent,
   SiteConfigComponent,
 } from '@/features/admin/settings-sections';
-import { UserConfig } from '@/features/admin/user-config';
-import { VideoSourceConfig } from '@/features/admin/video-source-config';
 import {
   AlertModal,
   buttonStyles,
@@ -24,6 +24,8 @@ import {
   useAlertModal,
   useLoadingState,
 } from '@/features/admin/shared';
+import { UserConfig } from '@/features/admin/user-config';
+import { VideoSourceConfig } from '@/features/admin/video-source-config';
 
 // 新增配置文件组件
 function AdminPageClient() {

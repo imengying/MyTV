@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+ 
 'use client';
 
 export interface PlayRecord {

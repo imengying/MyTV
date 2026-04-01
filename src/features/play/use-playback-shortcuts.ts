@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, type MutableRefObject } from 'react';
+import { type MutableRefObject,useEffect } from 'react';
 
 import { type SearchResult } from '@/lib/types';
 
+import { type PlaybackArtPlayer } from '@/features/play/player-core';
+
 interface UsePlaybackShortcutsParams {
-  artPlayerRef: MutableRefObject<any>;
+  artPlayerRef: MutableRefObject<PlaybackArtPlayer | null>;
   detailRef: MutableRefObject<SearchResult | null>;
   currentEpisodeIndexRef: MutableRefObject<number>;
   handlePreviousEpisode: () => void;

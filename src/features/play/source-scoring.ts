@@ -1,7 +1,7 @@
 'use client';
 
-import { getVideoResolutionFromM3u8 } from '@/lib/utils';
 import { type SearchResult } from '@/lib/types';
+import { getVideoResolutionFromM3u8 } from '@/lib/utils';
 
 import { type SourceVideoInfo } from '@/features/play/source-selection.types';
 
@@ -87,7 +87,6 @@ export const preferBestSource = async (
       batchSources.map(async (source) => {
         try {
           if (!source.episodes || source.episodes.length === 0) {
-            console.warn(`播放源 ${source.source_name} 没有可用的播放地址`);
             return null;
           }
 
@@ -122,7 +121,6 @@ export const preferBestSource = async (
   }>;
 
   if (successfulResults.length === 0) {
-    console.warn('所有播放源测速都失败，使用第一个播放源');
     return {
       bestSource: sources[0],
       precomputedVideoInfo: newVideoInfoMap,
@@ -153,13 +151,6 @@ export const preferBestSource = async (
   }));
 
   resultsWithScore.sort((a, b) => b.score - a.score);
-
-  console.log('播放源评分排序结果:');
-  resultsWithScore.forEach((result, index) => {
-    console.log(
-      `${index + 1}. ${result.source.source_name} - 评分: ${result.score.toFixed(2)} (${result.testResult.quality}, ${result.testResult.loadSpeed}, ${result.testResult.pingTime}ms)`,
-    );
-  });
 
   return {
     bestSource: resultsWithScore[0].source,

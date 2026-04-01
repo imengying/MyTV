@@ -1,8 +1,8 @@
 import {
-  DEFAULT_CONFIG_SUBSCRIPTION,
   type AdminConfig,
+  DEFAULT_CONFIG_SUBSCRIPTION,
 } from './admin.types';
-import { parseConfigFile, type ApiSite } from './config.shared';
+import { type ApiSite,parseConfigFile } from './config.shared';
 
 const mapSourceToApiSite = (
   source: AdminConfig['SourceConfig'][number],

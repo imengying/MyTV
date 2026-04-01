@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import { type Dispatch, type MutableRefObject, type SetStateAction,useEffect } from 'react';
 
 import {
   generateStorageKey,
@@ -10,13 +10,14 @@ import {
 import { type SearchResult } from '@/lib/types';
 
 import {
+  type PlaybackArtPlayer,
   releaseWakeLock,
   requestWakeLock,
   type WakeLockSentinel,
 } from '@/features/play/player-core';
 
 interface SavePlaybackProgressParams {
-  artPlayerRef: MutableRefObject<any>;
+  artPlayerRef: MutableRefObject<PlaybackArtPlayer | null>;
   currentSourceRef: MutableRefObject<string>;
   currentIdRef: MutableRefObject<string>;
   videoTitleRef: MutableRefObject<string>;
@@ -69,19 +70,12 @@ export const savePlaybackProgress = async ({
     });
 
     lastSaveTimeRef.current = Date.now();
-    console.log('播放进度已保存:', {
-      title: videoTitleRef.current,
-      episode: currentEpisodeIndexRef.current + 1,
-      year: detailRef.current?.year,
-      progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
-    });
-  } catch (err) {
-    console.error('保存播放进度失败:', err);
+  } catch {
   }
 };
 
 interface UsePlaybackPersistenceParams {
-  artPlayerRef: MutableRefObject<any>;
+  artPlayerRef: MutableRefObject<PlaybackArtPlayer | null>;
   currentSource: string;
   currentId: string;
   currentEpisodeIndex: number;
@@ -120,8 +114,7 @@ export const usePlaybackPersistence = ({
         }
 
         resumeTimeRef.current = targetTime;
-      } catch (err) {
-        console.error('读取播放记录失败:', err);
+      } catch {
       }
     };
 

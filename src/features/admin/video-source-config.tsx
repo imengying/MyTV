@@ -3,6 +3,7 @@
 import {
   closestCenter,
   DndContext,
+  type DragEndEvent,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -132,7 +133,7 @@ export const VideoSourceConfig = ({
   }, [config]);
 
   // 通用 API 请求
-  const callSourceApi = async (body: Record<string, any>) => {
+  const callSourceApi = async (body: Record<string, unknown>) => {
     try {
       const resp = await fetch('/api/admin/source', {
         method: 'POST',
@@ -141,7 +142,9 @@ export const VideoSourceConfig = ({
       });
 
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
+        const data = (await resp.json().catch(() => ({}))) as {
+          error?: string;
+        };
         throw new Error(data.error || `操作失败: ${resp.status}`);
       }
 
@@ -157,19 +160,15 @@ export const VideoSourceConfig = ({
     const target = sources.find((s) => s.key === key);
     if (!target) return;
     const action = target.disabled ? 'enable' : 'disable';
-    withLoading(`toggleSource_${key}`, () =>
-      callSourceApi({ action, key }),
-    ).catch(() => {
-      console.error('操作失败', action, key);
-    });
+    withLoading(`toggleSource_${key}`, () => callSourceApi({ action, key })).catch(
+      () => {},
+    );
   };
 
   const handleDelete = (key: string) => {
     withLoading(`deleteSource_${key}`, () =>
       callSourceApi({ action: 'delete', key }),
-    ).catch(() => {
-      console.error('操作失败', 'delete', key);
-    });
+    ).catch(() => {});
   };
 
   const handleAddSource = () => {
@@ -191,12 +190,10 @@ export const VideoSourceConfig = ({
         from: 'custom',
       });
       setShowAddForm(false);
-    }).catch(() => {
-      console.error('操作失败', 'add', newSource);
-    });
+    }).catch(() => {});
   };
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = sources.findIndex((s) => s.key === active.id);
@@ -213,9 +210,7 @@ export const VideoSourceConfig = ({
       .then(() => {
         setOrderChanged(false);
       })
-      .catch(() => {
-        console.error('操作失败', 'sort', order);
-      });
+      .catch(() => {});
   };
 
   // 有效性检测函数
@@ -255,10 +250,6 @@ export const VideoSourceConfig = ({
             const data = JSON.parse(event.data);
 
             switch (data.type) {
-              case 'start':
-                console.log(`开始检测 ${data.totalSources} 个视频源`);
-                break;
-
               case 'source_result':
               case 'source_error':
                 // 更新验证结果
@@ -306,20 +297,17 @@ export const VideoSourceConfig = ({
                 break;
 
               case 'complete':
-                console.log(
-                  `检测完成，共检测 ${data.completedSources} 个视频源`,
-                );
                 eventSource.close();
                 setIsValidating(false);
                 break;
             }
           } catch (error) {
-            console.error('解析EventSource数据失败:', error);
+            void error;
           }
         };
 
         eventSource.onerror = (error) => {
-          console.error('EventSource错误:', error);
+          void error;
           eventSource.close();
           setIsValidating(false);
           showAlert({

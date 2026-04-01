@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import type { MutableRefObject } from 'react';
@@ -7,6 +8,26 @@ import type { SearchResult } from '@/lib/types';
 type VideoElementWithHls = HTMLVideoElement & {
   hls?: any;
 };
+
+export interface PlaybackArtPlayer {
+  video?: VideoElementWithHls;
+  currentTime: number;
+  duration: number;
+  volume: number;
+  playbackRate: number;
+  paused: boolean;
+  fullscreen: boolean;
+  title: string;
+  poster: string;
+  switch: string;
+  notice: { show: string };
+  controls?: {
+    update(config: unknown): void;
+  };
+  destroy(): void;
+  on(event: string, handler: (...args: unknown[]) => void): void;
+  toggle(): void;
+}
 
 export interface WakeLockSentinel {
   released: boolean;
@@ -41,10 +62,8 @@ export const requestWakeLock = async (
   try {
     if ('wakeLock' in navigator) {
       wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-      console.log('Wake Lock 已启用');
     }
-  } catch (err) {
-    console.warn('Wake Lock 请求失败:', err);
+  } catch {
   }
 };
 
@@ -55,14 +74,14 @@ export const releaseWakeLock = async (
     if (wakeLockRef.current) {
       await wakeLockRef.current.release();
       wakeLockRef.current = null;
-      console.log('Wake Lock 已释放');
     }
-  } catch (err) {
-    console.warn('Wake Lock 释放失败:', err);
+  } catch {
   }
 };
 
-export const cleanupPlayer = (artPlayerRef: MutableRefObject<any>) => {
+export const cleanupPlayer = (
+  artPlayerRef: MutableRefObject<PlaybackArtPlayer | null>,
+) => {
   if (artPlayerRef.current) {
     try {
       if (artPlayerRef.current.video && artPlayerRef.current.video.hls) {
@@ -71,10 +90,7 @@ export const cleanupPlayer = (artPlayerRef: MutableRefObject<any>) => {
 
       artPlayerRef.current.destroy();
       artPlayerRef.current = null;
-
-      console.log('播放器资源已清理');
-    } catch (err) {
-      console.warn('清理播放器资源时出错:', err);
+    } catch {
       artPlayerRef.current = null;
     }
   }
@@ -118,7 +134,7 @@ export const createCustomHlsJsLoader = (Hls: any) => {
 };
 
 interface SwitchExistingPlayerOptions {
-  artPlayerRef: MutableRefObject<any>;
+  artPlayerRef: MutableRefObject<PlaybackArtPlayer | null>;
   videoUrl: string;
   videoTitle: string;
   currentEpisodeIndex: number;
@@ -132,14 +148,14 @@ export const switchExistingPlayer = ({
   currentEpisodeIndex,
   videoCover,
 }: SwitchExistingPlayerOptions) => {
-  artPlayerRef.current.switch = videoUrl;
-  artPlayerRef.current.title = `${videoTitle} - 第${currentEpisodeIndex + 1}集`;
-  artPlayerRef.current.poster = videoCover;
-  if (artPlayerRef.current?.video) {
-    ensureVideoSource(
-      artPlayerRef.current.video as HTMLVideoElement,
-      videoUrl,
-    );
+  const player = artPlayerRef.current;
+  if (!player) return;
+
+  player.switch = videoUrl;
+  player.title = `${videoTitle} - 第${currentEpisodeIndex + 1}集`;
+  player.poster = videoCover;
+  if (player.video) {
+    ensureVideoSource(player.video as HTMLVideoElement, videoUrl);
   }
 };
 
@@ -147,7 +163,7 @@ interface InitializeArtPlayerOptions {
   Artplayer: typeof import('artplayer').default;
   Hls: typeof import('hls.js').default;
   artRef: MutableRefObject<HTMLDivElement | null>;
-  artPlayerRef: MutableRefObject<any>;
+  artPlayerRef: MutableRefObject<PlaybackArtPlayer | null>;
   videoUrl: string;
   videoCover: string;
   videoTitle: string;
@@ -175,8 +191,8 @@ export const initializeArtPlayer = ({
   artPlayerRef,
   videoUrl,
   videoCover,
-  videoTitle,
-  currentEpisodeIndex,
+  videoTitle: _videoTitle,
+  currentEpisodeIndex: _currentEpisodeIndex,
   isWebkit,
   handleNextEpisode,
   saveCurrentPlayProgress,
@@ -197,8 +213,39 @@ export const initializeArtPlayer = ({
   Artplayer.FULLSCREEN_WEB_IN_BODY = true;
 
   const CustomHlsJsLoader = createCustomHlsJsLoader(Hls);
+  const playbackRates = Artplayer.PLAYBACK_RATE as number[];
 
-  artPlayerRef.current = new Artplayer({
+  const formatPlaybackRate = (rate: number) => `${rate}x`;
+
+  const buildPlaybackRateSelector = (currentRate: number) =>
+    playbackRates.map((value) => ({
+      html: formatPlaybackRate(value),
+      value,
+      default: Math.abs(value - currentRate) < 0.001,
+    }));
+
+  const updatePlaybackRateControl = (currentRate: number) => {
+    if (!artPlayerRef.current?.controls?.update) return;
+
+    artPlayerRef.current.controls.update({
+      name: 'playback-rate',
+      position: 'right',
+      index: 20,
+      html: formatPlaybackRate(currentRate),
+      tooltip: '播放速度',
+      selector: buildPlaybackRateSelector(currentRate),
+      onSelect: function (selector: { value?: string | number }) {
+        const selectedRate = Number(selector.value || 1);
+        const player = artPlayerRef.current;
+        if (!player) return;
+        player.playbackRate = selectedRate;
+        updatePlaybackRateControl(selectedRate);
+        player.notice.show = `播放速度 ${formatPlaybackRate(selectedRate)}`;
+      },
+    });
+  };
+
+  const player = new Artplayer({
     container: artRef.current!,
     url: videoUrl,
     poster: videoCover,
@@ -210,10 +257,10 @@ export const initializeArtPlayer = ({
     autoSize: false,
     autoMini: false,
     screenshot: false,
-    setting: true,
+    setting: false,
     loop: false,
     flip: false,
-    playbackRate: true,
+    playbackRate: false,
     aspectRatio: false,
     fullscreen: true,
     fullscreenWeb: true,
@@ -235,7 +282,6 @@ export const initializeArtPlayer = ({
     customType: {
       m3u8: function (video: HTMLVideoElement, url: string) {
         if (!Hls) {
-          console.error('HLS.js 未加载');
           return;
         }
 
@@ -260,20 +306,16 @@ export const initializeArtPlayer = ({
 
         ensureVideoSource(video, url);
 
-        hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-          console.error('HLS Error:', event, data);
+        hls.on(Hls.Events.ERROR, function (_event: any, data: any) {
           if (data.fatal) {
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR:
-                console.log('网络错误，尝试恢复...');
                 hls.startLoad();
                 break;
               case Hls.ErrorTypes.MEDIA_ERROR:
-                console.log('媒体错误，尝试恢复...');
                 hls.recoverMediaError();
                 break;
               default:
-                console.log('无法恢复的错误');
                 hls.destroy();
                 break;
             }
@@ -287,6 +329,20 @@ export const initializeArtPlayer = ({
     },
     controls: [
       {
+        name: 'playback-rate',
+        position: 'right',
+        index: 20,
+        html: formatPlaybackRate(lastPlaybackRateRef.current),
+        tooltip: '播放速度',
+        selector: buildPlaybackRateSelector(lastPlaybackRateRef.current),
+        onSelect: function (selector: { value?: string | number }) {
+          const selectedRate = Number(selector.value || 1);
+          player.playbackRate = selectedRate;
+          updatePlaybackRateControl(selectedRate);
+          player.notice.show = `播放速度 ${formatPlaybackRate(selectedRate)}`;
+        },
+      },
+      {
         position: 'left',
         index: 13,
         html: '<i class="art-icon flex"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/></svg></i>',
@@ -296,82 +352,82 @@ export const initializeArtPlayer = ({
         },
       },
     ],
-  });
+  }) as unknown as PlaybackArtPlayer;
 
-  artPlayerRef.current.on('ready', () => {
+  artPlayerRef.current = player;
+
+  player.on('ready', () => {
     setError(null);
-    if (artPlayerRef.current && !artPlayerRef.current.paused) {
+    updatePlaybackRateControl(lastPlaybackRateRef.current);
+    if (!player.paused) {
       requestWakeLock();
     }
   });
 
-  artPlayerRef.current.on('play', () => {
+  player.on('play', () => {
     requestWakeLock();
   });
 
-  artPlayerRef.current.on('pause', () => {
+  player.on('pause', () => {
     releaseWakeLock();
     saveCurrentPlayProgress();
   });
 
-  artPlayerRef.current.on('video:ended', () => {
+  player.on('video:ended', () => {
     releaseWakeLock();
   });
 
-  if (artPlayerRef.current && !artPlayerRef.current.paused) {
+  if (!player.paused) {
     requestWakeLock();
   }
 
-  artPlayerRef.current.on('video:volumechange', () => {
-    lastVolumeRef.current = artPlayerRef.current.volume;
+  player.on('video:volumechange', () => {
+    lastVolumeRef.current = player.volume;
   });
 
-  artPlayerRef.current.on('video:ratechange', () => {
-    lastPlaybackRateRef.current = artPlayerRef.current.playbackRate;
+  player.on('video:ratechange', () => {
+    lastPlaybackRateRef.current = player.playbackRate;
+    updatePlaybackRateControl(lastPlaybackRateRef.current);
   });
 
-  artPlayerRef.current.on('video:canplay', () => {
+  player.on('video:canplay', () => {
     if (resumeTimeRef.current && resumeTimeRef.current > 0) {
       try {
-        const duration = artPlayerRef.current.duration || 0;
+        const duration = player.duration || 0;
         let target = resumeTimeRef.current;
         if (duration && target >= duration - 2) {
           target = Math.max(0, duration - 5);
         }
-        artPlayerRef.current.currentTime = target;
-        console.log('成功恢复播放进度到:', resumeTimeRef.current);
-      } catch (err) {
-        console.warn('恢复播放进度失败:', err);
+        player.currentTime = target;
+      } catch {
       }
     }
     resumeTimeRef.current = null;
 
     setTimeout(() => {
-      if (Math.abs(artPlayerRef.current.volume - lastVolumeRef.current) > 0.01) {
-        artPlayerRef.current.volume = lastVolumeRef.current;
+      if (Math.abs(player.volume - lastVolumeRef.current) > 0.01) {
+        player.volume = lastVolumeRef.current;
       }
       if (
-        Math.abs(
-          artPlayerRef.current.playbackRate - lastPlaybackRateRef.current,
-        ) > 0.01 &&
+        Math.abs(player.playbackRate - lastPlaybackRateRef.current) > 0.01 &&
         isWebkit
       ) {
-        artPlayerRef.current.playbackRate = lastPlaybackRateRef.current;
+        player.playbackRate = lastPlaybackRateRef.current;
       }
-      artPlayerRef.current.notice.show = '';
+      updatePlaybackRateControl(player.playbackRate);
+      player.notice.show = '';
     }, 0);
 
     setIsVideoLoading(false);
   });
 
-  artPlayerRef.current.on('error', (err: any) => {
-    console.error('播放器错误:', err);
-    if (artPlayerRef.current.currentTime > 0) {
+  player.on('error', (_err: any) => {
+    if (player.currentTime > 0) {
       return;
     }
   });
 
-  artPlayerRef.current.on('video:ended', () => {
+  player.on('video:ended', () => {
     const d = detailRef.current;
     const idx = currentEpisodeIndexRef.current;
     if (d && d.episodes && idx < d.episodes.length - 1) {
@@ -381,7 +437,7 @@ export const initializeArtPlayer = ({
     }
   });
 
-  artPlayerRef.current.on('video:timeupdate', () => {
+  player.on('video:timeupdate', () => {
     const now = Date.now();
     const interval = 5000;
     if (now - lastSaveTimeRef.current > interval) {
@@ -390,14 +446,11 @@ export const initializeArtPlayer = ({
     }
   });
 
-  artPlayerRef.current.on('pause', () => {
+  player.on('pause', () => {
     saveCurrentPlayProgress();
   });
 
-  if (artPlayerRef.current?.video) {
-    ensureVideoSource(
-      artPlayerRef.current.video as HTMLVideoElement,
-      videoUrl,
-    );
+  if (player.video) {
+    ensureVideoSource(player.video as HTMLVideoElement, videoUrl);
   }
 };

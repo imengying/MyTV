@@ -1,6 +1,5 @@
 'use client';
 
-import { type DoubanResult } from './types';
 import {
   buildProxyAwareRequest,
   type DoubanCategoriesParams,
@@ -10,6 +9,7 @@ import {
   mapDoubanCategoryItemToCard,
   notifyDoubanError,
 } from './douban.client.shared';
+import { type DoubanResult } from './types';
 
 export async function fetchDoubanCategories(
   params: DoubanCategoriesParams,

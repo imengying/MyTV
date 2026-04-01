@@ -5,17 +5,20 @@ import { type Dispatch, type MutableRefObject, type SetStateAction } from 'react
 import { deletePlayRecord } from '@/lib/db.client';
 import { type SearchResult } from '@/lib/types';
 
-import { type WakeLockSentinel } from '@/features/play/player-core';
 import {
   savePlaybackProgress,
   usePlaybackPersistence,
 } from '@/features/play/playback-persistence';
+import {
+  type PlaybackArtPlayer,
+  type WakeLockSentinel,
+} from '@/features/play/player-core';
 import { resolveSourceChange } from '@/features/play/source-selection';
 import { usePlaybackFavorite } from '@/features/play/use-playback-favorite';
 import { usePlaybackShortcuts } from '@/features/play/use-playback-shortcuts';
 
 interface UsePlaybackSessionParams {
-  artPlayerRef: MutableRefObject<any>;
+  artPlayerRef: MutableRefObject<PlaybackArtPlayer | null>;
   currentSource: string;
   currentId: string;
   currentEpisodeIndex: number;
@@ -92,7 +95,6 @@ export const usePlaybackSession = ({
       setIsVideoLoading(true);
 
       const currentPlayTime = artPlayerRef.current?.currentTime || 0;
-      console.log('换源前当前播放时间:', currentPlayTime);
 
       if (currentSourceRef.current && currentIdRef.current) {
         try {
@@ -100,9 +102,7 @@ export const usePlaybackSession = ({
             currentSourceRef.current,
             currentIdRef.current,
           );
-          console.log('已清除前一个播放记录');
-        } catch (err) {
-          console.error('清除播放记录失败:', err);
+        } catch {
         }
       }
 

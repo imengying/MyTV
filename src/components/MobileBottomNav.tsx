@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 'use client';
 
 import { Cat, Clover, Film, Home, Tv } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
 
 interface MobileBottomNavProps {
   /**
@@ -20,7 +19,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
   // 当前激活路径：优先使用传入的 activePath，否则回退到浏览器地址
   const currentActive = activePath ?? pathname;
 
-  const [navItems, setNavItems] = useState([
+  const navItems = [
     { icon: Home, label: '首页', href: '/' },
     {
       icon: Film,
@@ -42,7 +41,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       label: '综艺',
       href: '/douban?type=show',
     },
-  ]);
+  ];
 
   const isActive = (href: string) => {
     const typeMatch = href.match(/type=([^&]+)/)?.[1];

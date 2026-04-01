@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type MutableRefObject } from 'react';
+import { type MutableRefObject,useEffect, useState } from 'react';
 
 import {
   deleteFavorite,
@@ -39,8 +39,7 @@ export const usePlaybackFavorite = ({
       try {
         const fav = await isFavorited(currentSource, currentId);
         setFavorited(fav);
-      } catch (err) {
-        console.error('检查收藏状态失败:', err);
+      } catch {
       }
     })();
   }, [currentId, currentSource]);
@@ -86,8 +85,7 @@ export const usePlaybackFavorite = ({
         search_title: searchTitle,
       });
       setFavorited(true);
-    } catch (err) {
-      console.error('切换收藏失败:', err);
+    } catch {
     }
   };
 

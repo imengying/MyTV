@@ -2,9 +2,9 @@ import { API_CONFIG, type ApiSite } from '@/lib/config';
 import { type SearchResult } from '@/lib/types';
 
 import {
+  type ApiSearchItem,
   buildDetailResultFromApiItem,
   buildSpecialSourceDetailResult,
-  type ApiSearchItem,
 } from './downstream.shared';
 
 async function fetchTextWithTimeout(

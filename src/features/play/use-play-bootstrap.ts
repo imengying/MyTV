@@ -1,23 +1,23 @@
 'use client';
 
 import {
-  useEffect,
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
+  useEffect,
 } from 'react';
 
 import { type SearchResult } from '@/lib/types';
 
-import { type WakeLockSentinel } from '@/features/play/player-core';
 import {
   type PlayLoadingStage,
-  type VideoLoadingStage,
   usePlayBootstrapState,
+  type VideoLoadingStage,
 } from '@/features/play/play-bootstrap-state';
+import { type WakeLockSentinel } from '@/features/play/player-core';
 import { resolveVideoUrl } from '@/features/play/source-selection';
-import { usePlayBootstrapInit } from '@/features/play/use-play-bootstrap-init';
 import { type SourceVideoInfo } from '@/features/play/source-selection.types';
+import { usePlayBootstrapInit } from '@/features/play/use-play-bootstrap-init';
 
 interface UsePlayBootstrapParams {
   initialTitle: string;

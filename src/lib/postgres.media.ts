@@ -1,9 +1,9 @@
-import { type Favorite, type PlayRecord } from './types';
 import {
   mapJsonRecordRows,
   parseJsonColumn,
   type PostgresQuery,
 } from './postgres.storage-helpers';
+import { type Favorite, type PlayRecord } from './types';
 
 export async function getPlayRecord(
   query: PostgresQuery,

@@ -13,8 +13,7 @@ export const fetchSourceDetail = async (
     }
     const detailData = (await detailResponse.json()) as SearchResult;
     return [detailData];
-  } catch (err) {
-    console.error('获取视频详情失败:', err);
+  } catch {
     return [];
   }
 };

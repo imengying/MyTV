@@ -1,7 +1,6 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 'use client';
 
-import { type PlayRecord } from './db.client.types';
 import {
   cacheManager,
   fetchFromApi,
@@ -10,6 +9,7 @@ import {
   handleDatabaseOperationFailure,
   triggerGlobalError,
 } from './db.client.shared';
+import { type PlayRecord } from './db.client.types';
 
 export async function getAllPlayRecords(): Promise<Record<string, PlayRecord>> {
   if (typeof window === 'undefined') {

@@ -2,8 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { DEFAULT_CONFIG_SUBSCRIPTION } from '@/lib/admin.types';
+import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, refineConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 

@@ -2,8 +2,7 @@
 'use client';
 
 import { getAuthInfoFromBrowserCookie } from './auth';
-
-import { type Favorite, type PlayRecord, type CacheUpdateEvent } from './db.client.types';
+import { type CacheUpdateEvent,type Favorite, type PlayRecord } from './db.client.types';
 
 function triggerGlobalError(message: string) {
   if (typeof window !== 'undefined') {

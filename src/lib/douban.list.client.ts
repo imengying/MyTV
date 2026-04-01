@@ -1,6 +1,5 @@
 'use client';
 
-import { type DoubanItem, type DoubanResult } from './types';
 import {
   buildProxyAwareRequest,
   type DoubanListApiResponse,
@@ -9,6 +8,7 @@ import {
   getDoubanProxyConfig,
   notifyDoubanError,
 } from './douban.client.shared';
+import { type DoubanItem, type DoubanResult } from './types';
 
 export async function fetchDoubanList(
   params: DoubanListParams,

@@ -1,8 +1,8 @@
-import { API_CONFIG, getConfig, type ApiSite } from '@/lib/config';
+import { API_CONFIG, type ApiSite,getConfig } from '@/lib/config';
 import { getCachedSearchPage, setCachedSearchPage } from '@/lib/search-cache';
 import { type SearchResult } from '@/lib/types';
 
-import { buildSearchResultFromApiItem, type ApiSearchItem } from './downstream.shared';
+import { type ApiSearchItem,buildSearchResultFromApiItem } from './downstream.shared';
 
 async function searchWithCache(
   apiSite: ApiSite,

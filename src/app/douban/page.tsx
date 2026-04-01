@@ -1,4 +1,4 @@
-/* eslint-disable no-console,react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 
 'use client';
 
@@ -49,17 +49,33 @@ function DoubanPageClient() {
   const isShortPreset =
     searchType === 'short' || (type === 'tv' && searchPreset === 'short');
 
+  const getAnimeRegion = useCallback((selection: string) => {
+    switch (selection) {
+      case 'anime_cn':
+        return '中国大陆';
+      case 'anime_jp':
+        return '日本';
+      case 'anime_us':
+        return '美国';
+      case 'anime_other':
+        return '其它';
+      default:
+        return '';
+    }
+  }, []);
+
   const [primarySelection, setPrimarySelection] = useState<string>(() => {
     if (type === 'movie') return '热门';
-    if (type === 'tv') return isShortPreset ? '短剧' : '最近热门';
+    if (type === 'tv') return '最近热门';
     if (type === 'show') return '最近热门';
-    if (type === 'anime') return '全部';
+    if (type === 'anime') return '最近热门';
     return '';
   });
   const [secondarySelection, setSecondarySelection] = useState<string>(() => {
     if (type === 'movie') return '全部';
-    if (type === 'tv') return 'tv';
+    if (type === 'tv') return isShortPreset ? 'tv_short' : 'tv';
     if (type === 'show') return 'show';
+    if (type === 'anime') return 'anime_all';
     return '全部';
   });
 
@@ -100,7 +116,11 @@ function DoubanPageClient() {
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
 
-    if (type === 'tv' && primarySelection === '短剧') {
+    if (
+      type === 'tv' &&
+      primarySelection === '最近热门' &&
+      secondarySelection === 'tv_short'
+    ) {
       params.set('type', 'tv');
       params.set('preset', 'short');
     } else {
@@ -118,21 +138,21 @@ function DoubanPageClient() {
         scroll: false,
       });
     }
-  }, [primarySelection, router, searchParams, searchType, type]);
+  }, [primarySelection, router, searchParams, searchType, secondarySelection, type]);
 
   useEffect(() => {
     if (type === 'movie') {
       setPrimarySelection('热门');
       setSecondarySelection('全部');
     } else if (type === 'tv') {
-      setPrimarySelection(isShortPreset ? '短剧' : '最近热门');
-      setSecondarySelection('tv');
+      setPrimarySelection('最近热门');
+      setSecondarySelection(isShortPreset ? 'tv_short' : 'tv');
     } else if (type === 'show') {
       setPrimarySelection('最近热门');
       setSecondarySelection('show');
     } else if (type === 'anime') {
-      setPrimarySelection('全部');
-      setSecondarySelection('全部');
+      setPrimarySelection('最近热门');
+      setSecondarySelection('anime_all');
     } else {
       setPrimarySelection('');
       setSecondarySelection('全部');
@@ -227,25 +247,34 @@ function DoubanPageClient() {
       let data: DoubanResult;
 
       if (type === 'anime') {
-        data = await getDoubanRecommends({
-          kind: 'tv',
-          pageLimit: 25,
-          pageStart: 0,
-          category: '动画',
-          format: '电视剧',
-          region: multiLevelValues.region
-            ? (multiLevelValues.region as string)
-            : '',
-          year: multiLevelValues.year ? (multiLevelValues.year as string) : '',
-          platform: multiLevelValues.platform
-            ? (multiLevelValues.platform as string)
-            : '',
-          sort: multiLevelValues.sort ? (multiLevelValues.sort as string) : '',
-          label: multiLevelValues.label
-            ? (multiLevelValues.label as string)
-            : '',
-        });
-      } else if (type === 'tv' && primarySelection === '短剧') {
+        const animeRegion = getAnimeRegion(secondarySelection);
+        if (
+          primarySelection === '最近热门' &&
+          secondarySelection === 'anime_all'
+        ) {
+          data = await getDoubanCategories({
+            kind: 'tv',
+            category: 'tv',
+            type: 'tv_animation',
+            pageLimit: 25,
+            pageStart: 0,
+          });
+        } else {
+          data = await getDoubanRecommends({
+            kind: 'tv',
+            pageLimit: 25,
+            pageStart: 0,
+            category: '动画',
+            format: '电视剧',
+            region: animeRegion,
+            sort: primarySelection === '最近热门' ? 'U' : 'T',
+          });
+        }
+      } else if (
+        type === 'tv' &&
+        primarySelection === '最近热门' &&
+        secondarySelection === 'tv_short'
+      ) {
         data = await getDoubanRecommends({
           kind: 'tv',
           pageLimit: 25,
@@ -311,6 +340,7 @@ function DoubanPageClient() {
     primarySelection,
     secondarySelection,
     multiLevelValues,
+    getAnimeRegion,
     getRequestParams,
     isSnapshotEqual,
   ]);
@@ -359,31 +389,36 @@ function DoubanPageClient() {
       try {
         setIsLoadingMore(true);
 
-        let data: DoubanResult;
-        if (type === 'anime') {
+      let data: DoubanResult;
+      if (type === 'anime') {
+        const animeRegion = getAnimeRegion(secondarySelection);
+        if (
+          primarySelection === '最近热门' &&
+          secondarySelection === 'anime_all'
+        ) {
+          data = await getDoubanCategories({
+            kind: 'tv',
+            category: 'tv',
+            type: 'tv_animation',
+            pageLimit: 25,
+            pageStart: currentPage * 25,
+          });
+        } else {
           data = await getDoubanRecommends({
             kind: 'tv',
             pageLimit: 25,
             pageStart: currentPage * 25,
             category: '动画',
             format: '电视剧',
-            region: multiLevelValues.region
-              ? (multiLevelValues.region as string)
-              : '',
-            year: multiLevelValues.year
-              ? (multiLevelValues.year as string)
-              : '',
-            platform: multiLevelValues.platform
-              ? (multiLevelValues.platform as string)
-              : '',
-            sort: multiLevelValues.sort
-              ? (multiLevelValues.sort as string)
-              : '',
-            label: multiLevelValues.label
-              ? (multiLevelValues.label as string)
-              : '',
+            region: animeRegion,
+            sort: primarySelection === '最近热门' ? 'U' : 'T',
           });
-        } else if (type === 'tv' && primarySelection === '短剧') {
+        }
+      } else if (
+        type === 'tv' &&
+        primarySelection === '最近热门' &&
+          secondarySelection === 'tv_short'
+        ) {
           data = await getDoubanRecommends({
             kind: 'tv',
             pageLimit: 25,
@@ -461,6 +496,7 @@ function DoubanPageClient() {
     primarySelection,
     secondarySelection,
     multiLevelValues,
+    getAnimeRegion,
     getRequestParams,
     isSnapshotEqual,
   ]);
@@ -518,11 +554,11 @@ function DoubanPageClient() {
           } else if (type === 'show') {
             setSecondarySelection('show');
           }
-        } else if (type === 'tv' && value === '短剧') {
-          setPrimarySelection(value);
-          setSecondarySelection('tv');
         } else {
           setPrimarySelection(value);
+          if (type === 'tv' && value === '全部') {
+            setSecondarySelection('tv');
+          }
         }
       }
     },
@@ -584,7 +620,9 @@ function DoubanPageClient() {
   const getPageDescription = () =>
     type === 'anime'
       ? '来自豆瓣的动画精选内容'
-      : type === 'tv' && primarySelection === '短剧'
+      : type === 'tv' &&
+          primarySelection === '最近热门' &&
+          secondarySelection === 'tv_short'
         ? '来自豆瓣的短剧与微短剧精选内容'
         : '来自豆瓣的精选内容';
 

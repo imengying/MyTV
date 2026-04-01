@@ -65,7 +65,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
   const tvPrimaryOptions: SelectorOption[] = [
     { label: '全部', value: '全部' },
     { label: '最近热门', value: '最近热门' },
-    { label: '短剧', value: '短剧' },
   ];
 
   // 电视剧二级选择器选项
@@ -75,7 +74,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     { label: '欧美', value: 'tv_american' },
     { label: '日本', value: 'tv_japanese' },
     { label: '韩国', value: 'tv_korean' },
-    { label: '动漫', value: 'tv_animation' },
+    { label: '短剧', value: 'tv_short' },
     { label: '纪录片', value: 'tv_documentary' },
   ];
 
@@ -90,6 +89,21 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     { label: '全部', value: 'show' },
     { label: '国内', value: 'show_domestic' },
     { label: '国外', value: 'show_foreign' },
+  ];
+
+  // 动漫一级选择器选项
+  const animePrimaryOptions: SelectorOption[] = [
+    { label: '全部', value: '全部' },
+    { label: '最近热门', value: '最近热门' },
+  ];
+
+  // 动漫二级选择器选项
+  const animeSecondaryOptions: SelectorOption[] = [
+    { label: '全部', value: 'anime_all' },
+    { label: '国漫', value: 'anime_cn' },
+    { label: '日漫', value: 'anime_jp' },
+    { label: '美漫', value: 'anime_us' },
+    { label: '其它', value: 'anime_other' },
   ];
 
   // 处理多级选择器变化
@@ -165,6 +179,17 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         primaryButtonRefs,
         setPrimaryIndicatorStyle,
       );
+    } else if (type === 'anime') {
+      const activeIndex = animePrimaryOptions.findIndex(
+        (opt) =>
+          opt.value === (primarySelection || animePrimaryOptions[1].value),
+      );
+      updateIndicatorPosition(
+        activeIndex,
+        primaryContainerRef,
+        primaryButtonRefs,
+        setPrimaryIndicatorStyle,
+      );
     }
 
     // 副选择器初始位置
@@ -183,6 +208,12 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       secondaryActiveIndex = showSecondaryOptions.findIndex(
         (opt) =>
           opt.value === (secondarySelection || showSecondaryOptions[0].value),
+      );
+    } else if (type === 'anime') {
+      secondaryActiveIndex = animeSecondaryOptions.findIndex(
+        (opt) =>
+          opt.value ===
+          (secondarySelection || animeSecondaryOptions[0].value),
       );
     }
 
@@ -231,6 +262,17 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         setPrimaryIndicatorStyle,
       );
       return cleanup;
+    } else if (type === 'anime') {
+      const activeIndex = animePrimaryOptions.findIndex(
+        (opt) => opt.value === primarySelection,
+      );
+      const cleanup = updateIndicatorPosition(
+        activeIndex,
+        primaryContainerRef,
+        primaryButtonRefs,
+        setPrimaryIndicatorStyle,
+      );
+      return cleanup;
     }
   }, [primarySelection]);
 
@@ -254,6 +296,11 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         (opt) => opt.value === secondarySelection,
       );
       options = showSecondaryOptions;
+    } else if (type === 'anime') {
+      activeIndex = animeSecondaryOptions.findIndex(
+        (opt) => opt.value === secondarySelection,
+      );
+      options = animeSecondaryOptions;
     }
 
     if (options.length > 0) {
@@ -392,7 +439,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
             </div>
           </div>
 
-          {/* 二级选择器 - 选中“最近热门”时显示；选中“全部/短剧”时显示多级筛选 */}
+          {/* 二级选择器 - 选中“最近热门”时显示，选中“全部”时显示多级筛选 */}
           {(primarySelection || tvPrimaryOptions[1].value) === '最近热门' ? (
             <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
               <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
@@ -407,10 +454,8 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                 )}
               </div>
             </div>
-          ) : ['全部', '短剧'].includes(
-              primarySelection || tvPrimaryOptions[1].value,
-            ) ? (
-            /* 多级选择器 - 选中“全部”或“短剧”时显示 */
+          ) : (primarySelection || tvPrimaryOptions[1].value) === '全部' ? (
+            /* 多级选择器 - 只在选中“全部”时显示 */
             <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
               <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
                 筛选
@@ -482,14 +527,29 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         <div className='space-y-3 sm:space-y-4'>
           <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
             <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-              筛选
+              分类
             </span>
             <div className='overflow-x-auto'>
-              <MultiLevelSelector
-                key='anime'
-                onChange={handleMultiLevelChange}
-                contentType='tv'
-              />
+              {renderCapsuleSelector(
+                animePrimaryOptions,
+                primarySelection || animePrimaryOptions[1].value,
+                onPrimaryChange,
+                true,
+              )}
+            </div>
+          </div>
+
+          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
+            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+              类型
+            </span>
+            <div className='overflow-x-auto'>
+              {renderCapsuleSelector(
+                animeSecondaryOptions,
+                secondarySelection || animeSecondaryOptions[0].value,
+                onSecondaryChange,
+                false,
+              )}
             </div>
           </div>
         </div>

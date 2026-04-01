@@ -3,9 +3,9 @@
 import { db } from '@/lib/db';
 
 import {
-  DEFAULT_CONFIG_SUBSCRIPTION,
   type AdminConfig,
   type ConfigSubscription,
+  DEFAULT_CONFIG_SUBSCRIPTION,
 } from './admin.types';
 import { parseConfigFile } from './config.shared';
 

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 'use client';
 
@@ -34,6 +34,7 @@ const Logo = () => {
       href='/'
       className='flex items-center justify-center gap-3 h-16 select-none hover:opacity-80 transition-opacity duration-200'
     >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src='/logo.svg'
         alt={`${siteName} logo`}
@@ -129,7 +130,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     isCollapsed,
   };
 
-  const [menuItems, setMenuItems] = useState([
+  const menuItems = [
     {
       icon: Film,
       label: '电影',
@@ -150,7 +151,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
       label: '综艺',
       href: '/douban?type=show',
     },
-  ]);
+  ];
 
   return (
     <SidebarContext.Provider value={contextValue}>

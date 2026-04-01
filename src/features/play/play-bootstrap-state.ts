@@ -1,12 +1,12 @@
 'use client';
 
 import {
-  useEffect,
-  useRef,
-  useState,
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 
 import { type SearchResult } from '@/lib/types';
