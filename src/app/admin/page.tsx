@@ -35,6 +35,7 @@ function AdminPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<'owner' | 'admin' | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string | null>(null);
   const [showResetConfigModal, setShowResetConfigModal] = useState(false);
   const [expandedTabs, setExpandedTabs] = useState<{ [key: string]: boolean }>({
     userConfig: false,
@@ -62,6 +63,7 @@ function AdminPageClient() {
       const data = (await response.json()) as AdminConfigResult;
       setConfig(data.Config);
       setRole(data.Role);
+      setCurrentUsername(data.CurrentUsername);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '获取配置失败';
       showError(msg, showAlert);
@@ -201,6 +203,7 @@ function AdminPageClient() {
             >
               <UserConfig
                 config={config}
+                currentUsername={currentUsername}
                 role={role}
                 refreshConfig={fetchConfig}
               />

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
+import { setClientAuthInfo } from '@/lib/auth';
 import { CURRENT_VERSION } from '@/lib/version';
 
 import { useSite } from '@/components/SiteProvider';
@@ -60,15 +61,18 @@ function LoginPageClient() {
           ...(shouldAskUsername ? { username } : {}),
         }),
       });
+      const data = await res.json().catch(() => null);
 
       if (res.ok) {
+        if (data?.session) {
+          setClientAuthInfo(data.session);
+        }
         const redirect = searchParams.get('redirect') || '/';
         router.replace(redirect);
       } else if (res.status === 401) {
-        setError('密码错误');
+        setError(data?.error ?? '用户名或密码错误');
       } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? '服务器错误');
+        setError(data?.error ?? '服务器错误');
       }
     } catch {
       setError('网络错误，请稍后重试');

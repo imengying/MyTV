@@ -1,55 +1,69 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { type UserRole } from '@/lib/auth';
+import { AUTH_COOKIE_NAME, AUTH_MAX_AGE_MS, generateAuthSignature } from '@/lib/auth.server';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { isHashed, verifyPassword } from '@/lib/password';
 
 export const runtime = 'nodejs';
 
-// 生成签名
-async function generateSignature(
-  data: string,
-  secret: string,
-): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(data);
+function isOwnerPasswordValid(password: string): boolean {
+  const configuredPassword = process.env.PASSWORD;
+  if (!configuredPassword) {
+    return false;
+  }
 
-  // 导入密钥
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
+  if (isHashed(configuredPassword)) {
+    return verifyPassword(password, configuredPassword);
+  }
 
-  // 生成签名
-  const signature = await crypto.subtle.sign('HMAC', key, messageData);
-
-  // 转换为十六进制字符串
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  return password === configuredPassword;
 }
 
-// 生成认证Cookie（带签名）
 async function generateAuthCookie(
   username: string,
-  role?: 'owner' | 'admin' | 'user',
 ): Promise<string> {
-  const authData: any = { role: role || 'user' };
-
-  authData.username = username;
-  // 使用密码作为密钥对用户名进行签名
-  const signature = await generateSignature(
+  const timestamp = Date.now();
+  const signature = await generateAuthSignature(
     username,
+    timestamp,
     process.env.PASSWORD || '',
   );
-  authData.signature = signature;
-  authData.timestamp = Date.now(); // 添加时间戳防重放攻击
+
+  const authData: any = {
+    username,
+    signature,
+    timestamp,
+  };
 
   return encodeURIComponent(JSON.stringify(authData));
+}
+
+async function buildLoginResponse(
+  username: string,
+  role: UserRole,
+): Promise<NextResponse> {
+  const response = NextResponse.json({
+    ok: true,
+    session: {
+      username,
+      role,
+    },
+  });
+  const cookieValue = await generateAuthCookie(username);
+  const expires = new Date(Date.now() + AUTH_MAX_AGE_MS);
+
+  response.cookies.set(AUTH_COOKIE_NAME, cookieValue, {
+    path: '/',
+    expires,
+    sameSite: 'lax',
+    httpOnly: true,
+    secure: false,
+  });
+
+  return response;
 }
 
 export async function POST(req: NextRequest) {
@@ -64,25 +78,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 可能是站长，直接读环境变量
-    if (
-      username === process.env.USERNAME &&
-      password === process.env.PASSWORD
-    ) {
-      // 验证成功，设置认证cookie
-      const response = NextResponse.json({ ok: true });
-      const cookieValue = await generateAuthCookie(username, 'owner');
-      const expires = new Date();
-      expires.setDate(expires.getDate() + 7); // 7天过期
-
-      response.cookies.set('auth', cookieValue, {
-        path: '/',
-        expires,
-        sameSite: 'lax',
-        httpOnly: false,
-        secure: false, // 根据协议自动设置
-      });
-
-      return response;
+    if (username === process.env.USERNAME && isOwnerPasswordValid(password)) {
+      return buildLoginResponse(username, 'owner');
     } else if (username === process.env.USERNAME) {
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
     }
@@ -103,24 +100,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 验证成功，设置认证cookie
-      const response = NextResponse.json({ ok: true });
-      const cookieValue = await generateAuthCookie(
-        username,
-        user?.role || 'user',
-      );
-      const expires = new Date();
-      expires.setDate(expires.getDate() + 7); // 7天过期
-
-      response.cookies.set('auth', cookieValue, {
-        path: '/',
-        expires,
-        sameSite: 'lax',
-        httpOnly: false,
-        secure: false, // 根据协议自动设置
-      });
-
-      return response;
+      return buildLoginResponse(username, user?.role || 'user');
     } catch (err) {
       console.error('数据库验证失败', err);
       return NextResponse.json({ error: '数据库错误' }, { status: 500 });

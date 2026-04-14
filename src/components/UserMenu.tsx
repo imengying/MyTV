@@ -6,6 +6,8 @@ import { User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { clearClientAuthInfo } from '@/lib/auth';
+import { clearUserCache } from '@/lib/db.client';
 import { CURRENT_VERSION } from '@/lib/version';
 
 import { ChangePasswordPanel } from '@/features/user-menu/change-password-panel';
@@ -79,6 +81,9 @@ export const UserMenu: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    clearUserCache();
+    clearClientAuthInfo();
+
     try {
       await fetch('/api/logout', {
         method: 'POST',

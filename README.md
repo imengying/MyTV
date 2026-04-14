@@ -126,7 +126,7 @@ NEXT_PUBLIC_SITE_NAME=MyTV
 docker compose -f deploy/docker-compose.dev.yml up -d --build
 ```
 
-运行时镜像会通过 [start-standalone.js](/home/mengying/文档/code/MyTV/deploy/start-standalone.js) 启动 Next standalone 服务，并定时请求 `/api/cron`。
+运行时镜像会通过 [start-standalone.js](deploy/start-standalone.js) 启动 Next standalone 服务，并定时请求 `/api/cron`。
 
 ### Vercel
 

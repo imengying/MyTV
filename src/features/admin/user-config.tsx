@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { type AdminConfig } from '@/lib/admin.types';
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 import {
   AdminModalShell,
@@ -18,11 +17,17 @@ import {
 // 用户配置组件
 interface UserConfigProps {
   config: AdminConfig | null;
+  currentUsername: string | null;
   role: 'owner' | 'admin' | null;
   refreshConfig: () => Promise<void>;
 }
 
-export const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
+export const UserConfig = ({
+  config,
+  currentUsername,
+  role,
+  refreshConfig,
+}: UserConfigProps) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
   const [showAddUserForm, setShowAddUserForm] = useState(false);
@@ -76,9 +81,6 @@ export const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => 
   } | null>(null);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
-
-  // 当前登录用户名
-  const currentUsername = getAuthInfoFromBrowserCookie()?.username || null;
 
   // 使用 useMemo 计算全选状态，避免每次渲染都重新计算
   const selectAllUsers = useMemo(() => {
@@ -1803,4 +1805,3 @@ export const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => 
     </div>
   );
 };
-

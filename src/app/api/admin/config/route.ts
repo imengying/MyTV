@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     const config = await getConfig();
     const result: AdminConfigResult = {
       Role: 'owner',
+      CurrentUsername: username,
       Config: config,
     };
     if (username === process.env.USERNAME) {

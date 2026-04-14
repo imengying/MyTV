@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-
-interface AuthInfo {
-  username?: string;
-  role?: 'owner' | 'admin' | 'user';
-}
+import { getClientAuthInfo, refreshClientAuthInfo, type ClientAuthInfo } from '@/lib/auth';
 
 export const useUserMenuMeta = () => {
-  const [authInfo, setAuthInfo] = useState<AuthInfo | null>(null);
+  const [authInfo, setAuthInfo] = useState<ClientAuthInfo | null>(() =>
+    getClientAuthInfo(),
+  );
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -18,9 +15,17 @@ export const useUserMenuMeta = () => {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const auth = getAuthInfoFromBrowserCookie();
-    setAuthInfo(auth);
+    let active = true;
+
+    refreshClientAuthInfo().then((auth) => {
+      if (active) {
+        setAuthInfo(auth);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return {

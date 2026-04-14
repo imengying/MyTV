@@ -5,6 +5,7 @@ import './globals.css';
 
 import { getConfig } from '@/lib/config';
 
+import { AuthSessionSync } from '../components/AuthSessionSync';
 import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
 import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
@@ -82,6 +83,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <SiteProvider siteName={siteName} announcement={announcement}>
+            <AuthSessionSync />
             {children}
             <GlobalErrorIndicator />
           </SiteProvider>

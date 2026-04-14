@@ -1,8 +1,12 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 'use client';
 
-import { getAuthInfoFromBrowserCookie } from './auth';
-import { type CacheUpdateEvent,type Favorite, type PlayRecord } from './db.client.types';
+import { clearClientAuthInfo, getClientAuthInfo } from './auth';
+import {
+  type CacheUpdateEvent,
+  type Favorite,
+  type PlayRecord,
+} from './db.client.types';
 
 function triggerGlobalError(message: string) {
   if (typeof window !== 'undefined') {
@@ -41,7 +45,7 @@ class HybridCacheManager {
   }
 
   private getCurrentUsername(): string | null {
-    const authInfo = getAuthInfoFromBrowserCookie();
+    const authInfo = getClientAuthInfo();
     return authInfo?.username || null;
   }
 
@@ -247,6 +251,8 @@ export async function fetchWithAuth(
   const res = await fetch(url, options);
   if (!res.ok) {
     if (res.status === 401) {
+      cacheManager.clearUserCache();
+      clearClientAuthInfo();
       try {
         await fetch('/api/logout', {
           method: 'POST',
@@ -371,7 +377,7 @@ export function getCacheStatus(): {
   hasSearchHistory: boolean;
   username: string | null;
 } {
-  const authInfo = getAuthInfoFromBrowserCookie();
+  const authInfo = getClientAuthInfo();
   return {
     hasPlayRecords: !!cacheManager.getCachedPlayRecords(),
     hasFavorites: !!cacheManager.getCachedFavorites(),

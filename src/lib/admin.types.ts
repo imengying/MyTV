@@ -50,5 +50,6 @@ export interface AdminConfig {
 
 export interface AdminConfigResult {
   Role: 'owner' | 'admin';
+  CurrentUsername: string;
   Config: AdminConfig;
 }
