@@ -1,6 +1,11 @@
 'use client';
 
-import { type Dispatch, type MutableRefObject, type SetStateAction,useEffect } from 'react';
+import {
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+  useEffect,
+} from 'react';
 
 import {
   generateStorageKey,
@@ -143,5 +148,5 @@ export const usePlaybackPersistence = ({
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [artPlayerRef, currentEpisodeIndex, saveCurrentPlayProgress, wakeLockRef]);
+  }, [artPlayerRef, saveCurrentPlayProgress, wakeLockRef]);
 };
