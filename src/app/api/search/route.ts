@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
+import { logWarn } from '@/lib/logger';
+import { SearchResult } from '@/lib/types';
 import { yellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
@@ -37,28 +37,33 @@ export async function GET(request: NextRequest) {
   const apiSites = await getAvailableApiSites(authInfo.username);
 
   // 添加超时控制和错误处理，避免慢接口拖累整体响应
-  const searchPromises = apiSites.map((site) =>
-    Promise.race([
-      searchFromApi(site, query),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000),
-      ),
-    ]).catch((err) => {
-      console.warn(`搜索失败 ${site.name}:`, err.message);
-      return []; // 返回空数组而不是抛出错误
-    }),
-  );
+  const searchPromises = apiSites.map(async (site): Promise<SearchResult[]> => {
+    try {
+      return await Promise.race<SearchResult[]>([
+        searchFromApi(site, query),
+        new Promise<SearchResult[]>((_, reject) =>
+          setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000),
+        ),
+      ]);
+    } catch (error) {
+      logWarn(`搜索失败 ${site.name}:`, error);
+      return [];
+    }
+  });
 
   try {
     const results = await Promise.allSettled(searchPromises);
     const successResults = results
-      .filter((result) => result.status === 'fulfilled')
-      .map((result) => (result as PromiseFulfilledResult<any>).value);
+      .filter(
+        (result): result is PromiseFulfilledResult<SearchResult[]> =>
+          result.status === 'fulfilled',
+      )
+      .map((result) => result.value);
     let flattenedResults = successResults.flat();
     if (!config.SiteConfig.DisableYellowFilter) {
       flattenedResults = flattenedResults.filter((result) => {
         const typeName = result.type_name || '';
-        return !yellowWords.some((word: string) => typeName.includes(word));
+        return !yellowWords.some((word) => typeName.includes(word));
       });
     }
     const cacheTime = await getCacheTime();

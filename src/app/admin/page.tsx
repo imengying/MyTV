@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps */
-
 'use client';
 
 import { Database, FileText, Settings, Users, Video } from 'lucide-react';
@@ -27,6 +25,10 @@ import {
 import { UserConfig } from '@/features/admin/user-config';
 import { VideoSourceConfig } from '@/features/admin/video-source-config';
 
+interface ErrorResponse {
+  error?: string;
+}
+
 // 新增配置文件组件
 function AdminPageClient() {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
@@ -47,33 +49,36 @@ function AdminPageClient() {
 
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
-  const fetchConfig = useCallback(async (showLoading = false) => {
-    try {
-      if (showLoading) {
-        setLoading(true);
-      }
+  const fetchConfig = useCallback(
+    async (showLoading = false) => {
+      try {
+        if (showLoading) {
+          setLoading(true);
+        }
 
-      const response = await fetch(`/api/admin/config`);
+        const response = await fetch(`/api/admin/config`);
 
-      if (!response.ok) {
-        const data = (await response.json()) as any;
-        throw new Error(`获取配置失败: ${data.error}`);
-      }
+        if (!response.ok) {
+          const data = (await response.json()) as ErrorResponse;
+          throw new Error(`获取配置失败: ${data.error}`);
+        }
 
-      const data = (await response.json()) as AdminConfigResult;
-      setConfig(data.Config);
-      setRole(data.Role);
-      setCurrentUsername(data.CurrentUsername);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : '获取配置失败';
-      showError(msg, showAlert);
-      setError(msg);
-    } finally {
-      if (showLoading) {
-        setLoading(false);
+        const data = (await response.json()) as AdminConfigResult;
+        setConfig(data.Config);
+        setRole(data.Role);
+        setCurrentUsername(data.CurrentUsername);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '获取配置失败';
+        showError(msg, showAlert);
+        setError(msg);
+      } finally {
+        if (showLoading) {
+          setLoading(false);
+        }
       }
-    }
-  }, []);
+    },
+    [showAlert],
+  );
 
   useEffect(() => {
     // 首次加载时显示骨架

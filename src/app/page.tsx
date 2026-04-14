@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
-
 'use client';
 
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 
 // 客户端收藏 API
 import {
@@ -12,8 +10,11 @@ import {
   getAllFavorites,
   getAllPlayRecords,
   subscribeToDataUpdates,
+  type Favorite as StoredFavorite,
+  type PlayRecord,
 } from '@/lib/db.client';
 import { getDoubanCategories, getDoubanRecommends } from '@/lib/douban.client';
+import { logError } from '@/lib/logger';
 import { DoubanItem } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
@@ -61,6 +62,39 @@ function HomeClient() {
 
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
 
+  const updateFavoriteItems = useCallback(
+    async (allFavorites: Record<string, StoredFavorite>) => {
+      const allPlayRecords = await getAllPlayRecords();
+
+      // 根据保存时间排序（从近到远）
+      const sorted = Object.entries(allFavorites)
+        .sort(([, a], [, b]) => b.save_time - a.save_time)
+        .map(([key, fav]) => {
+          const plusIndex = key.indexOf('+');
+          const source = key.slice(0, plusIndex);
+          const id = key.slice(plusIndex + 1);
+
+          // 查找对应的播放记录，获取当前集数
+          const playRecord: PlayRecord | undefined = allPlayRecords[key];
+          const currentEpisode = playRecord?.index;
+
+          return {
+            id,
+            source,
+            title: fav.title,
+            poster: fav.cover,
+            episodes: fav.total_episodes,
+            source_name: fav.source_name,
+            currentEpisode,
+            search_title: fav.search_title,
+            origin: fav.origin,
+          };
+        });
+      setFavoriteItems(sorted);
+    },
+    [],
+  );
+
   useEffect(() => {
     const fetchRecommendData = async () => {
       try {
@@ -100,7 +134,7 @@ function HomeClient() {
           setHotVarietyShows(varietyShowsData.list);
         }
       } catch (error) {
-        console.error('获取推荐数据失败:', error);
+        logError('获取推荐数据失败:', error);
       } finally {
         setLoading(false);
       }
@@ -108,38 +142,6 @@ function HomeClient() {
 
     fetchRecommendData();
   }, []);
-
-  // 处理收藏数据更新的函数
-  const updateFavoriteItems = async (allFavorites: Record<string, any>) => {
-    const allPlayRecords = await getAllPlayRecords();
-
-    // 根据保存时间排序（从近到远）
-    const sorted = Object.entries(allFavorites)
-      .sort(([, a], [, b]) => b.save_time - a.save_time)
-      .map(([key, fav]) => {
-        const plusIndex = key.indexOf('+');
-        const source = key.slice(0, plusIndex);
-        const id = key.slice(plusIndex + 1);
-
-        // 查找对应的播放记录，获取当前集数
-        const playRecord = allPlayRecords[key];
-        const currentEpisode = playRecord?.index;
-
-        return {
-          id,
-          source,
-          title: fav.title,
-          year: fav.year,
-          poster: fav.cover,
-          episodes: fav.total_episodes,
-          source_name: fav.source_name,
-          currentEpisode,
-          search_title: fav?.search_title,
-          origin: fav?.origin,
-        } as FavoriteItem;
-      });
-    setFavoriteItems(sorted);
-  };
 
   // 当切换到收藏夹时加载收藏数据
   useEffect(() => {
@@ -155,13 +157,13 @@ function HomeClient() {
     // 监听收藏更新事件
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
-      (newFavorites: Record<string, any>) => {
+      (newFavorites: Record<string, StoredFavorite>) => {
         updateFavoriteItems(newFavorites);
       },
     );
 
     return unsubscribe;
-  }, [activeTab]);
+  }, [activeTab, updateFavoriteItems]);
 
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);

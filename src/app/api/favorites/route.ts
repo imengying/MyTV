@@ -1,10 +1,9 @@
-/* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logError } from '@/lib/logger';
 import { Favorite } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -58,7 +57,7 @@ export async function GET(request: NextRequest) {
     const favorites = await db.getAllFavorites(authInfo.username);
     return NextResponse.json(favorites, { status: 200 });
   } catch (err) {
-    console.error('获取收藏失败', err);
+    logError('获取收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 },
@@ -118,16 +117,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const finalFavorite = {
+    const finalFavorite: Favorite = {
       ...favorite,
       save_time: favorite.save_time ?? Date.now(),
-    } as Favorite;
+    };
 
     await db.saveFavorite(authInfo.username, source, id, finalFavorite);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('保存收藏失败', err);
+    logError('保存收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 },
@@ -184,7 +183,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('删除收藏失败', err);
+    logError('删除收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 },

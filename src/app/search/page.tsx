@@ -1,9 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any */
 'use client';
 
 import { ChevronUp, Search, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, {
+  useCallback,
   startTransition,
   Suspense,
   useEffect,
@@ -29,6 +29,43 @@ import SearchSuggestions from '@/components/SearchSuggestions';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 import VirtualGrid from '@/components/VirtualGrid';
 
+type YearOrder = 'none' | 'asc' | 'desc';
+
+type SearchFilterValues = {
+  source: string;
+  title: string;
+  year: string;
+  yearOrder: YearOrder;
+};
+
+interface RuntimeConfig {
+  FLUID_SEARCH?: boolean;
+}
+
+interface RuntimeWindow extends Window {
+  RUNTIME_CONFIG?: RuntimeConfig;
+}
+
+const getDefaultRuntimeFluidSearch = () => {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  return (window as RuntimeWindow).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+};
+
+const toSearchFilterValues = (
+  values: Record<SearchFilterCategory['key'], string>,
+): SearchFilterValues => ({
+  source: values.source ?? 'all',
+  title: values.title ?? 'all',
+  year: values.year ?? 'all',
+  yearOrder:
+    values.yearOrder === 'asc' || values.yearOrder === 'desc'
+      ? values.yearOrder
+      : 'none',
+});
+
 function SearchPageClient() {
   // 搜索历史
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -49,6 +86,21 @@ function SearchPageClient() {
   const pendingResultsRef = useRef<SearchResult[]>([]);
   const flushTimerRef = useRef<number | null>(null);
   const [useFluidSearch, setUseFluidSearch] = useState(true);
+  const useFluidSearchRef = useRef(useFluidSearch);
+  const viewModeRef = useRef<'agg' | 'all'>('agg');
+  const filterAllRef = useRef<SearchFilterValues>({
+    source: 'all',
+    title: 'all',
+    year: 'all',
+    yearOrder: 'none',
+  });
+  const filterAggRef = useRef<SearchFilterValues>({
+    source: 'all',
+    title: 'all',
+    year: 'all',
+    yearOrder: 'none',
+  });
+  const totalSourcesRef = useRef(0);
   // 聚合卡片 refs 与聚合统计缓存
   const groupRefs = useRef<
     Map<string, React.RefObject<VideoCardHandle | null>>
@@ -69,7 +121,7 @@ function SearchPageClient() {
     return ref;
   };
 
-  const computeGroupStats = (group: SearchResult[]) => {
+  const computeGroupStats = useCallback((group: SearchResult[]) => {
     const episodes = (() => {
       const countMap = new Map<number, number>();
       group.forEach((g) => {
@@ -109,25 +161,15 @@ function SearchPageClient() {
     })();
 
     return { episodes, source_names, douban_id };
-  };
+  }, [searchParams]);
   // 过滤器：非聚合与聚合
-  const [filterAll, setFilterAll] = useState<{
-    source: string;
-    title: string;
-    year: string;
-    yearOrder: 'none' | 'asc' | 'desc';
-  }>({
+  const [filterAll, setFilterAll] = useState<SearchFilterValues>({
     source: 'all',
     title: 'all',
     year: 'all',
     yearOrder: 'none',
   });
-  const [filterAgg, setFilterAgg] = useState<{
-    source: string;
-    title: string;
-    year: string;
-    yearOrder: 'none' | 'asc' | 'desc';
-  }>({
+  const [filterAgg, setFilterAgg] = useState<SearchFilterValues>({
     source: 'all',
     title: 'all',
     year: 'all',
@@ -158,8 +200,8 @@ function SearchPageClient() {
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
 
-      const aNum = Number.parseInt(a.year as any, 10);
-      const bNum = Number.parseInt(b.year as any, 10);
+      const aNum = Number.parseInt(a.year, 10);
+      const bNum = Number.parseInt(b.year, 10);
       const aValid = !Number.isNaN(aNum);
       const bValid = !Number.isNaN(bNum);
       if (aValid && !bValid) return -1;
@@ -247,7 +289,7 @@ function SearchPageClient() {
         groupStatsRef.current.set(mapKey, stats);
       }
     });
-  }, [aggregatedResults]);
+  }, [aggregatedResults, computeGroupStats]);
 
   // 构建筛选选项
   const filterOptions = useMemo(() => {
@@ -340,7 +382,7 @@ function SearchPageClient() {
 
   // 聚合：应用筛选与排序
   const filteredAggResults = useMemo(() => {
-    const { source, title, year, yearOrder } = filterAgg as any;
+    const { source, title, year, yearOrder } = filterAgg;
     const filtered = aggregatedResults.filter(([, group]) => {
       const gTitle = group[0]?.title ?? '';
       const gYear = group[0]?.year ?? 'unknown';
@@ -381,6 +423,26 @@ function SearchPageClient() {
   }, [aggregatedResults, filterAgg, searchQuery]);
 
   useEffect(() => {
+    useFluidSearchRef.current = useFluidSearch;
+  }, [useFluidSearch]);
+
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
+
+  useEffect(() => {
+    filterAllRef.current = filterAll;
+  }, [filterAll]);
+
+  useEffect(() => {
+    filterAggRef.current = filterAgg;
+  }, [filterAgg]);
+
+  useEffect(() => {
+    totalSourcesRef.current = totalSources;
+  }, [totalSources]);
+
+  useEffect(() => {
     // 无搜索参数时聚焦搜索框
     if (!searchParams.get('q')) {
       document.getElementById('searchInput')?.focus();
@@ -392,8 +454,7 @@ function SearchPageClient() {
     // 读取流式搜索设置
     if (typeof window !== 'undefined') {
       const savedFluidSearch = localStorage.getItem('fluidSearch');
-      const defaultFluidSearch =
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+      const defaultFluidSearch = getDefaultRuntimeFluidSearch();
       if (savedFluidSearch !== null) {
         setUseFluidSearch(JSON.parse(savedFluidSearch));
       } else if (defaultFluidSearch !== undefined) {
@@ -476,20 +537,19 @@ function SearchPageClient() {
       const trimmed = query.trim();
 
       // 每次搜索时重新读取设置，确保使用最新的配置
-      let currentFluidSearch = useFluidSearch;
+      let currentFluidSearch = useFluidSearchRef.current;
       if (typeof window !== 'undefined') {
         const savedFluidSearch = localStorage.getItem('fluidSearch');
         if (savedFluidSearch !== null) {
           currentFluidSearch = JSON.parse(savedFluidSearch);
         } else {
-          const defaultFluidSearch =
-            (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+          const defaultFluidSearch = getDefaultRuntimeFluidSearch();
           currentFluidSearch = defaultFluidSearch;
         }
       }
 
       // 如果读取的配置与当前状态不同，更新状态
-      if (currentFluidSearch !== useFluidSearch) {
+      if (currentFluidSearch !== useFluidSearchRef.current) {
         setUseFluidSearch(currentFluidSearch);
       }
 
@@ -518,9 +578,9 @@ function SearchPageClient() {
                 ) {
                   // 缓冲新增结果，节流刷入，避免频繁重渲染导致闪烁
                   const activeYearOrder =
-                    viewMode === 'agg'
-                      ? filterAgg.yearOrder
-                      : filterAll.yearOrder;
+                    viewModeRef.current === 'agg'
+                      ? filterAggRef.current.yearOrder
+                      : filterAllRef.current.yearOrder;
                   const incoming: SearchResult[] =
                     activeYearOrder === 'none'
                       ? sortBatchForNoOrder(payload.results as SearchResult[])
@@ -543,7 +603,9 @@ function SearchPageClient() {
                 setCompletedSources((prev) => prev + 1);
                 break;
               case 'complete':
-                setCompletedSources(payload.completedSources || totalSources);
+                setCompletedSources(
+                  payload.completedSources || totalSourcesRef.current,
+                );
                 // 完成前确保将缓冲写入
                 if (pendingResultsRef.current.length > 0) {
                   const toAppend = pendingResultsRef.current;
@@ -598,7 +660,9 @@ function SearchPageClient() {
 
             if (data.results && Array.isArray(data.results)) {
               const activeYearOrder =
-                viewMode === 'agg' ? filterAgg.yearOrder : filterAll.yearOrder;
+                viewModeRef.current === 'agg'
+                  ? filterAggRef.current.yearOrder
+                  : filterAllRef.current.yearOrder;
               const results: SearchResult[] =
                 activeYearOrder === 'none'
                   ? sortBatchForNoOrder(data.results as SearchResult[])
@@ -788,13 +852,17 @@ function SearchPageClient() {
                     <SearchResultFilter
                       categories={filterOptions.categoriesAgg}
                       values={filterAgg}
-                      onChange={(v) => setFilterAgg(v as any)}
+                      onChange={(values) =>
+                        setFilterAgg(toSearchFilterValues(values))
+                      }
                     />
                   ) : (
                     <SearchResultFilter
                       categories={filterOptions.categoriesAll}
                       values={filterAll}
-                      onChange={(v) => setFilterAll(v as any)}
+                      onChange={(values) =>
+                        setFilterAll(toSearchFilterValues(values))
+                      }
                     />
                   )}
                 </div>

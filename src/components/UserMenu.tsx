@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 'use client';
 
 import { User } from 'lucide-react';
@@ -8,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { clearClientAuthInfo } from '@/lib/auth';
 import { clearUserCache } from '@/lib/db.client';
+import { logError } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 
 import { ChangePasswordPanel } from '@/features/user-menu/change-password-panel';
@@ -90,7 +89,7 @@ export const UserMenu: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch (error) {
-      console.error('注销请求失败:', error);
+      logError('注销请求失败:', error);
     }
     window.location.href = '/';
   };

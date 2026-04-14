@@ -1,9 +1,8 @@
-/* eslint-disable no-console*/
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { logError } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('修改密码失败:', error);
+    logError('修改密码失败:', error);
     return NextResponse.json(
       {
         error: '修改密码失败',

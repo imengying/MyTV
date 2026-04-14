@@ -8,7 +8,7 @@ import {
   ChevronUp,
   X,
 } from 'lucide-react';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 type AlertModalState = {
@@ -179,13 +179,13 @@ export const useAlertModal = () => {
     title: '',
   });
 
-  const showAlert = (config: AlertConfig) => {
+  const showAlert = useCallback((config: AlertConfig) => {
     setAlertModal({ ...config, isOpen: true });
-  };
+  }, []);
 
-  const hideAlert = () => {
+  const hideAlert = useCallback(() => {
     setAlertModal((prev) => ({ ...prev, isOpen: false }));
-  };
+  }, []);
 
   return { alertModal, showAlert, hideAlert };
 };

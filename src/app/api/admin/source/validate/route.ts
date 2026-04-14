@@ -1,12 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { API_CONFIG } from '@/lib/config';
+import { type ApiSearchItem } from '@/lib/downstream.shared';
+import { logWarn } from '@/lib/logger';
 
 export const runtime = 'nodejs';
+
+type ValidationStatus = 'valid' | 'no_results' | 'invalid';
+
+interface SourceValidationResponse {
+  list?: ApiSearchItem[];
+}
 
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
@@ -49,7 +55,7 @@ export async function GET(request: NextRequest) {
           controller.enqueue(data);
           return true;
         } catch (error) {
-          console.warn('Failed to enqueue data:', error);
+          logWarn('Failed to enqueue data:', error);
           streamClosed = true;
           return false;
         }
@@ -90,10 +96,10 @@ export async function GET(request: NextRequest) {
               throw new Error(`HTTP ${response.status}`);
             }
 
-            const data = (await response.json()) as any;
+            const data = (await response.json()) as SourceValidationResponse;
 
             // 检查结果是否有效
-            let status: 'valid' | 'no_results' | 'invalid';
+            let status: ValidationStatus;
             if (
               data &&
               data.list &&
@@ -101,7 +107,7 @@ export async function GET(request: NextRequest) {
               data.list.length > 0
             ) {
               // 检查是否有标题包含搜索词的结果
-              const validResults = data.list.filter((item: any) => {
+              const validResults = data.list.filter((item) => {
                 const title = item.vod_name || '';
                 return title
                   .toLowerCase()
@@ -136,7 +142,7 @@ export async function GET(request: NextRequest) {
             clearTimeout(timeoutId);
           }
         } catch (error) {
-          console.warn(`验证失败 ${site.name}:`, error);
+          logWarn(`验证失败 ${site.name}:`, error);
 
           // 发送源错误事件
           completedSources++;
@@ -168,7 +174,7 @@ export async function GET(request: NextRequest) {
               try {
                 controller.close();
               } catch (error) {
-                console.warn('Failed to close controller:', error);
+                logWarn('Failed to close controller:', error);
               }
             }
           }
@@ -181,7 +187,6 @@ export async function GET(request: NextRequest) {
 
     cancel() {
       streamClosed = true;
-      console.log('Client disconnected, cancelling validation stream');
     },
   });
 

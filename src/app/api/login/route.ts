@@ -1,10 +1,14 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { type UserRole } from '@/lib/auth';
-import { AUTH_COOKIE_NAME, AUTH_MAX_AGE_MS, generateAuthSignature } from '@/lib/auth.server';
+import { type AuthCookiePayload, type UserRole } from '@/lib/auth';
+import {
+  AUTH_COOKIE_NAME,
+  AUTH_MAX_AGE_MS,
+  generateAuthSignature,
+} from '@/lib/auth.server';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logError } from '@/lib/logger';
 import { isHashed, verifyPassword } from '@/lib/password';
 
 export const runtime = 'nodejs';
@@ -32,7 +36,7 @@ async function generateAuthCookie(
     process.env.PASSWORD || '',
   );
 
-  const authData: any = {
+  const authData: AuthCookiePayload = {
     username,
     signature,
     timestamp,
@@ -102,11 +106,11 @@ export async function POST(req: NextRequest) {
 
       return buildLoginResponse(username, user?.role || 'user');
     } catch (err) {
-      console.error('数据库验证失败', err);
+      logError('数据库验证失败', err);
       return NextResponse.json({ error: '数据库错误' }, { status: 500 });
     }
   } catch (error) {
-    console.error('登录接口异常', error);
+    logError('登录接口异常', error);
     return NextResponse.json({ error: '服务器错误' }, { status: 500 });
   }
 }

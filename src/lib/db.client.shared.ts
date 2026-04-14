@@ -1,4 +1,3 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 'use client';
 
 import { clearClientAuthInfo, getClientAuthInfo } from './auth';
@@ -7,6 +6,7 @@ import {
   type Favorite,
   type PlayRecord,
 } from './db.client.types';
+import { logError, logWarn } from './logger';
 
 function triggerGlobalError(message: string) {
   if (typeof window !== 'undefined') {
@@ -29,6 +29,12 @@ interface UserCacheStore {
   favorites?: CacheData<Record<string, Favorite>>;
   searchHistory?: CacheData<string[]>;
 }
+
+type CacheEntry = CacheData<unknown>;
+type DatabasePayload =
+  | Record<string, PlayRecord>
+  | Record<string, Favorite>
+  | string[];
 
 const CACHE_PREFIX = 'mytv_cache_';
 const CACHE_VERSION = '1.0.0';
@@ -61,7 +67,7 @@ class HybridCacheManager {
       const cached = localStorage.getItem(cacheKey);
       return cached ? JSON.parse(cached) : {};
     } catch (error) {
-      console.warn('获取用户缓存失败:', error);
+      logWarn('获取用户缓存失败:', error);
       return {};
     }
   }
@@ -72,14 +78,14 @@ class HybridCacheManager {
     try {
       const cacheSize = JSON.stringify(cache).length;
       if (cacheSize > 15 * 1024 * 1024) {
-        console.warn('缓存过大，清理旧数据');
+        logWarn('缓存过大，清理旧数据');
         this.cleanOldCache(cache);
       }
 
       const cacheKey = this.getUserCacheKey(username);
       localStorage.setItem(cacheKey, JSON.stringify(cache));
     } catch (error) {
-      console.warn('保存用户缓存失败:', error);
+      logWarn('保存用户缓存失败:', error);
       if (
         error instanceof DOMException &&
         error.name === 'QuotaExceededError'
@@ -89,7 +95,7 @@ class HybridCacheManager {
           const cacheKey = this.getUserCacheKey(username);
           localStorage.setItem(cacheKey, JSON.stringify(cache));
         } catch (retryError) {
-          console.error('重试保存缓存仍然失败:', retryError);
+          logError('重试保存缓存仍然失败:', retryError);
         }
       }
     }
@@ -204,7 +210,7 @@ class HybridCacheManager {
       const cacheKey = this.getUserCacheKey(targetUsername);
       localStorage.removeItem(cacheKey);
     } catch (error) {
-      console.warn('清除用户缓存失败:', error);
+      logWarn('清除用户缓存失败:', error);
     }
   }
 
@@ -220,8 +226,8 @@ class HybridCacheManager {
           try {
             const cache = JSON.parse(localStorage.getItem(key) || '{}');
             let hasValidData = false;
-            for (const [, cacheData] of Object.entries(cache)) {
-              if (cacheData && this.isCacheValid(cacheData as CacheData<any>)) {
+            for (const cacheData of Object.values(cache as UserCacheStore)) {
+              if (cacheData && this.isCacheValid(cacheData as CacheEntry)) {
                 hasValidData = true;
                 break;
               }
@@ -237,7 +243,7 @@ class HybridCacheManager {
 
       keysToRemove.forEach((key) => localStorage.removeItem(key));
     } catch (error) {
-      console.warn('清除过期缓存失败:', error);
+      logWarn('清除过期缓存失败:', error);
     }
   }
 }
@@ -259,7 +265,7 @@ export async function fetchWithAuth(
           headers: { 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.error('注销请求失败:', error);
+        logError('注销请求失败:', error);
       }
       const currentUrl = window.location.pathname + window.location.search;
       const loginUrl = new URL('/login', window.location.origin);
@@ -283,14 +289,14 @@ export function generateStorageKey(source: string, id: string): string {
 
 export async function handleDatabaseOperationFailure(
   dataType: 'playRecords' | 'favorites' | 'searchHistory',
-  error: any,
+  error: unknown,
 ): Promise<void> {
-  console.error(`数据库操作失败 (${dataType}):`, error);
+  logError(`数据库操作失败 (${dataType}):`, error);
   triggerGlobalError(`数据库操作失败`);
 
   try {
-    let freshData: any;
-    let eventName: string;
+    let freshData: DatabasePayload;
+    let eventName: CacheUpdateEvent;
 
     switch (dataType) {
       case 'playRecords':
@@ -318,7 +324,7 @@ export async function handleDatabaseOperationFailure(
       }),
     );
   } catch (refreshErr) {
-    console.error(`刷新${dataType}缓存失败:`, refreshErr);
+    logError(`刷新${dataType}缓存失败:`, refreshErr);
     triggerGlobalError(`刷新${dataType}缓存失败`);
   }
 }
@@ -366,7 +372,7 @@ export async function refreshAllCache(): Promise<void> {
       );
     }
   } catch (err) {
-    console.error('刷新缓存失败:', err);
+    logError('刷新缓存失败:', err);
     triggerGlobalError('刷新缓存失败');
   }
 }
@@ -412,7 +418,7 @@ export async function preloadUserData(): Promise<void> {
   }
 
   refreshAllCache().catch((err) => {
-    console.warn('预加载用户数据失败:', err);
+    logWarn('预加载用户数据失败:', err);
     triggerGlobalError('预加载用户数据失败');
   });
 }

@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
+import { logWarn } from '@/lib/logger';
+import { SearchResult } from '@/lib/types';
 import { yellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
           return true;
         } catch (error) {
           // 控制器已关闭或出现其他错误
-          console.warn('Failed to enqueue data:', error);
+          logWarn('Failed to enqueue data:', error);
           streamClosed = true;
           return false;
         }
@@ -72,15 +72,15 @@ export async function GET(request: NextRequest) {
 
       // 记录已完成的源数量
       let completedSources = 0;
-      const allResults: any[] = [];
+      const allResults: SearchResult[] = [];
 
       // 为每个源创建搜索 Promise
       const searchPromises = apiSites.map(async (site) => {
         try {
           // 添加超时控制
-          const searchPromise = Promise.race([
+          const searchPromise = Promise.race<SearchResult[]>([
             searchFromApi(site, query),
-            new Promise((_, reject) =>
+            new Promise<SearchResult[]>((_, reject) =>
               setTimeout(
                 () => reject(new Error(`${site.name} timeout`)),
                 20000,
@@ -88,16 +88,14 @@ export async function GET(request: NextRequest) {
             ),
           ]);
 
-          const results = (await searchPromise) as any[];
+          const results = await searchPromise;
 
           // 过滤黄色内容
           let filteredResults = results;
           if (!config.SiteConfig.DisableYellowFilter) {
             filteredResults = results.filter((result) => {
               const typeName = result.type_name || '';
-              return !yellowWords.some((word: string) =>
-                typeName.includes(word),
-              );
+              return !yellowWords.some((word) => typeName.includes(word));
             });
           }
 
@@ -123,7 +121,7 @@ export async function GET(request: NextRequest) {
             allResults.push(...filteredResults);
           }
         } catch (error) {
-          console.warn(`搜索失败 ${site.name}:`, error);
+          logWarn(`搜索失败 ${site.name}:`, error);
 
           // 发送源错误事件
           completedSources++;
@@ -160,7 +158,7 @@ export async function GET(request: NextRequest) {
               try {
                 controller.close();
               } catch (error) {
-                console.warn('Failed to close controller:', error);
+                logWarn('Failed to close controller:', error);
               }
             }
           }
@@ -174,7 +172,6 @@ export async function GET(request: NextRequest) {
     cancel() {
       // 客户端断开连接时，标记流已关闭
       streamClosed = true;
-      console.log('Client disconnected, cancelling search stream');
     },
   });
 
