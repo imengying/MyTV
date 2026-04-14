@@ -78,7 +78,6 @@ interface UsePlaybackPersistenceParams {
   artPlayerRef: MutableRefObject<PlaybackArtPlayer | null>;
   currentSource: string;
   currentId: string;
-  currentEpisodeIndex: number;
   resumeTimeRef: MutableRefObject<number | null>;
   wakeLockRef: MutableRefObject<WakeLockSentinel | null>;
   saveCurrentPlayProgress: () => void | Promise<void>;
@@ -89,7 +88,6 @@ export const usePlaybackPersistence = ({
   artPlayerRef,
   currentSource,
   currentId,
-  currentEpisodeIndex,
   resumeTimeRef,
   wakeLockRef,
   saveCurrentPlayProgress,
@@ -109,9 +107,9 @@ export const usePlaybackPersistence = ({
         const targetIndex = record.index - 1;
         const targetTime = record.play_time;
 
-        if (targetIndex !== currentEpisodeIndex) {
-          setCurrentEpisodeIndex(targetIndex);
-        }
+        // Only restore once when the playback target changes; otherwise
+        // a manual episode click would immediately get overwritten by history.
+        setCurrentEpisodeIndex(targetIndex);
 
         resumeTimeRef.current = targetTime;
       } catch {
@@ -119,7 +117,7 @@ export const usePlaybackPersistence = ({
     };
 
     initFromHistory();
-  }, [currentEpisodeIndex, currentId, currentSource, resumeTimeRef, setCurrentEpisodeIndex]);
+  }, [currentId, currentSource, resumeTimeRef, setCurrentEpisodeIndex]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {

@@ -172,7 +172,6 @@ export const usePlaybackSession = ({
     artPlayerRef,
     currentSource,
     currentId,
-    currentEpisodeIndex,
     resumeTimeRef,
     wakeLockRef,
     saveCurrentPlayProgress,
