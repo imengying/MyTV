@@ -31,10 +31,6 @@ interface UserCacheStore {
 }
 
 type CacheEntry = CacheData<unknown>;
-type DatabasePayload =
-  | Record<string, PlayRecord>
-  | Record<string, Favorite>
-  | string[];
 
 const CACHE_PREFIX = 'mytv_cache_';
 const CACHE_VERSION = '1.0.0';
@@ -295,34 +291,46 @@ export async function handleDatabaseOperationFailure(
   triggerGlobalError(`数据库操作失败`);
 
   try {
-    let freshData: DatabasePayload;
-    let eventName: CacheUpdateEvent;
-
     switch (dataType) {
-      case 'playRecords':
-        freshData =
+      case 'playRecords': {
+        const freshData =
           await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
         cacheManager.cachePlayRecords(freshData);
-        eventName = 'playRecordsUpdated';
+        window.dispatchEvent(
+          new CustomEvent<Readonly<Record<string, PlayRecord>>>(
+            'playRecordsUpdated',
+            {
+              detail: freshData,
+            },
+          ),
+        );
         break;
-      case 'favorites':
-        freshData =
+      }
+      case 'favorites': {
+        const freshData =
           await fetchFromApi<Record<string, Favorite>>(`/api/favorites`);
         cacheManager.cacheFavorites(freshData);
-        eventName = 'favoritesUpdated';
+        window.dispatchEvent(
+          new CustomEvent<Readonly<Record<string, Favorite>>>(
+            'favoritesUpdated',
+            {
+              detail: freshData,
+            },
+          ),
+        );
         break;
-      case 'searchHistory':
-        freshData = await fetchFromApi<string[]>(`/api/searchhistory`);
+      }
+      case 'searchHistory': {
+        const freshData = await fetchFromApi<string[]>(`/api/searchhistory`);
         cacheManager.cacheSearchHistory(freshData);
-        eventName = 'searchHistoryUpdated';
+        window.dispatchEvent(
+          new CustomEvent<ReadonlyArray<string>>('searchHistoryUpdated', {
+            detail: freshData,
+          }),
+        );
         break;
+      }
     }
-
-    window.dispatchEvent(
-      new CustomEvent(eventName, {
-        detail: freshData,
-      }),
-    );
   } catch (refreshErr) {
     logError(`刷新${dataType}缓存失败:`, refreshErr);
     triggerGlobalError(`刷新${dataType}缓存失败`);
