@@ -6,6 +6,7 @@ build/
 .turbo/
 .cache/
 .vercel/
+.codex
 
 public/manifest.json
 public/sw.js
